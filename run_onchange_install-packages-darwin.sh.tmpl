@@ -8,7 +8,7 @@ brew tap {{ . | quote }}
 {{ end -}}
 
 # ── Homebrew packages ─────────────────────────────────────────────
-brew bundle --no-lock --file=/dev/stdin <<EOF
+brew bundle --file=/dev/stdin <<EOF
 {{ range .packages.darwin.brews -}}
 brew {{ . | quote }}
 {{ end -}}
