@@ -1,7 +1,7 @@
 # This runs interactively on `chezmoi init` to set machine-specific values
 
 {{- $email := promptStringOnce . "email" "Git email address" -}}
-{{- $machine := promptChoiceOnce . "machine" "Machine type" (list "work" "personal") -}}
+{{- $machine := promptStringOnce . "machine" "Machine type" -}}
 
 [data]
     email = {{ $email | quote }}
