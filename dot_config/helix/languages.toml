@@ -1,0 +1,151 @@
+# ── Language Server Definitions ──────────────────────────────────────
+
+[language-server.vtsls]
+command = "vtsls"
+args = ["--stdio"]
+
+[language-server.vtsls.config.typescript.suggest]
+completeFunctionCalls = true
+
+[language-server.vtsls.config.typescript.inlayHints]
+parameterNames = { enabled = "all" }
+parameterTypes = { enabled = true }
+variableTypes = { enabled = true }
+propertyDeclarationTypes = { enabled = true }
+functionLikeReturnTypes = { enabled = true }
+enumMemberValues = { enabled = true }
+
+[language-server.vtsls.config.javascript.inlayHints]
+parameterNames = { enabled = "all" }
+parameterTypes = { enabled = true }
+variableTypes = { enabled = true }
+propertyDeclarationTypes = { enabled = true }
+functionLikeReturnTypes = { enabled = true }
+enumMemberValues = { enabled = true }
+
+[language-server.vscode-css-language-server]
+command = "vscode-css-language-server"
+args = ["--stdio"]
+
+[language-server.vscode-css-language-server.config]
+provideFormatter = true
+
+[language-server.vscode-html-language-server]
+command = "vscode-html-language-server"
+args = ["--stdio"]
+
+[language-server.vscode-json-language-server]
+command = "vscode-json-language-server"
+args = ["--stdio"]
+
+[language-server.vscode-json-language-server.config.json]
+validate = { enable = true }
+
+[language-server.yaml-language-server]
+command = "yaml-language-server"
+args = ["--stdio"]
+
+[language-server.yaml-language-server.config.yaml]
+validation = true
+completion = true
+
+[language-server.gopls]
+command = "gopls"
+args = ["serve"]
+
+[language-server.gopls.config.hints]
+assignVariableTypes = true
+compositeLiteralFields = true
+constantValues = true
+functionTypeParameters = true
+parameterNames = true
+rangeVariableTypes = true
+
+[language-server.docker-langserver]
+command = "docker-langserver"
+args = ["--stdio"]
+
+# ── Language Assignments ────────────────────────────────────────────
+
+[[language]]
+name = "typescript"
+language-servers = ["vtsls"]
+formatter = { command = "prettier", args = ["--parser", "typescript"] }
+auto-format = true
+
+[[language]]
+name = "javascript"
+language-servers = ["vtsls"]
+formatter = { command = "prettier", args = ["--parser", "babel"] }
+auto-format = true
+
+[[language]]
+name = "tsx"
+language-servers = ["vtsls"]
+formatter = { command = "prettier", args = ["--parser", "typescript"] }
+auto-format = true
+
+[[language]]
+name = "jsx"
+language-servers = ["vtsls"]
+formatter = { command = "prettier", args = ["--parser", "babel"] }
+auto-format = true
+
+[[language]]
+name = "json"
+language-servers = ["vscode-json-language-server"]
+formatter = { command = "prettier", args = ["--parser", "json"] }
+auto-format = true
+
+[[language]]
+name = "jsonc"
+language-servers = ["vscode-json-language-server"]
+
+[[language]]
+name = "html"
+language-servers = ["vscode-html-language-server"]
+formatter = { command = "prettier", args = ["--parser", "html"] }
+auto-format = true
+
+[[language]]
+name = "css"
+language-servers = ["vscode-css-language-server"]
+formatter = { command = "prettier", args = ["--parser", "css"] }
+auto-format = true
+
+[[language]]
+name = "scss"
+language-servers = ["vscode-css-language-server"]
+formatter = { command = "prettier", args = ["--parser", "scss"] }
+auto-format = true
+
+[[language]]
+name = "yaml"
+language-servers = ["yaml-language-server"]
+
+[[language]]
+name = "go"
+language-servers = ["gopls"]
+auto-format = true
+
+[[language]]
+name = "gomod"
+language-servers = ["gopls"]
+
+[[language]]
+name = "gowork"
+language-servers = ["gopls"]
+
+[[language]]
+name = "gotmpl"
+language-servers = ["gopls"]
+
+[[language]]
+name = "markdown"
+formatter = { command = "prettier", args = ["--parser", "markdown"] }
+auto-format = true
+soft-wrap.enable = true
+
+[[language]]
+name = "dockerfile"
+language-servers = ["docker-langserver"]

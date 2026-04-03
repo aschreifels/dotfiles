@@ -1,0 +1,45 @@
+packages:
+  darwin:
+    taps:
+      - homebrew/cask-fonts
+    brews:
+      # Shell & prompt
+      - starship
+      - zoxide
+      - fzf
+      - direnv
+
+      # Modern CLI
+      - bat
+      - eza
+      - fd
+      - ripgrep
+      - jq
+      - yq
+
+      # Git
+      - git-delta
+      - lazygit
+      - chezmoi
+
+      # Editor
+      - helix
+
+      # Runtimes
+      - asdf
+
+      # Containers & cloud
+      - kubernetes-cli
+      - k9s
+
+      # LSP servers
+      - vtsls
+      - gopls
+      - yaml-language-server
+
+    casks:
+      - font-victor-mono-nerd-font
+      - ghostty
+
+    npm:
+      - dockerfile-language-server-nodejs

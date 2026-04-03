@@ -1,0 +1,36 @@
+promptToReturnFromSubprocess: false
+
+os:
+  editPreset: "helix (hx)"
+
+gui:
+  nerdFontsVersion: "3"
+  # Catppuccin Macchiato — blue accent
+  theme:
+    activeBorderColor:
+      - '#8aadf4'  # Blue
+      - bold
+    inactiveBorderColor:
+      - '#a5adcb'  # Subtext0
+    optionsTextColor:
+      - '#8aadf4'  # Blue
+    selectedLineBgColor:
+      - '#363a4f'  # Surface0
+    selectedRangeBgColor:
+      - '#363a4f'  # Surface0
+    cherryPickedCommitBgColor:
+      - '#494d64'  # Surface1
+    cherryPickedCommitFgColor:
+      - '#8aadf4'  # Blue
+    unstagedChangesColor:
+      - '#ed8796'  # Red
+    defaultFgColor:
+      - '#cad3f5'  # Text
+    searchingActiveBorderColor:
+      - '#eed49f'  # Yellow
+  authorColors:
+    '*': '#b7bdf8'  # Lavender
+
+git:
+  pagers:
+    - pager: delta --paging=never --features catppuccin-macchiato --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"

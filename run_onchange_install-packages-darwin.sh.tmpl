@@ -1,0 +1,31 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+set -euo pipefail
+
+# ── Homebrew taps ─────────────────────────────────────────────────
+{{ range .packages.darwin.taps -}}
+brew tap {{ . | quote }}
+{{ end -}}
+
+# ── Homebrew packages ─────────────────────────────────────────────
+brew bundle --no-lock --file=/dev/stdin <<EOF
+{{ range .packages.darwin.brews -}}
+brew {{ . | quote }}
+{{ end -}}
+{{ range .packages.darwin.casks -}}
+cask {{ . | quote }}
+{{ end -}}
+EOF
+
+# ── npm global packages ───────────────────────────────────────────
+{{ range .packages.darwin.npm -}}
+npm install -g {{ . }}
+{{ end -}}
+
+# ── fzf keybindings (idempotent) ──────────────────────────────────
+$(brew --prefix)/opt/fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish
+
+# ── bat cache (rebuild for custom themes) ─────────────────────────
+bat cache --build
+
+{{ end -}}

@@ -1,0 +1,104 @@
+# cwt-rm - Crush Worktree Tool: Remove
+# Removes a cwt worktree and optionally deletes the branch.
+#
+# Usage:
+#   cwt-rm <name>                  # Remove worktree only
+#   cwt-rm <name> -D               # Remove worktree and delete branch
+#
+# Environment:
+#   CWT_WORKTREE_DIR    Override worktree parent directory
+
+local name=""
+local delete_branch=false
+local worktree_base="${CWT_WORKTREE_DIR:-}"
+
+# ── Parse arguments ──────────────────────────────────────────────
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -D|--delete-branch)
+      delete_branch=true
+      shift
+      ;;
+    -h|--help)
+      cat <<'EOF'
+cwt-rm - Crush Worktree Tool: Remove
+
+Removes a cwt worktree and optionally deletes the branch.
+Automatically detects the real branch name from the worktree
+(handles CWT_BRANCH_PREFIX, Linear tickets, etc.).
+
+Usage:
+  cwt-rm <name> [options]
+
+Options:
+  -D, --delete-branch    Also delete the git branch
+  -h, --help             Show this help
+
+Environment:
+  CWT_WORKTREE_DIR       Override worktree parent directory
+
+Examples:
+  cwt-rm my-feature          # remove worktree only
+  cwt-rm my-feature -D       # remove worktree + delete branch 'as/DEST-123_my-feature'
+EOF
+      return 0
+      ;;
+    -*)
+      echo "cwt-rm: unknown option '$1' (use --help for usage)" >&2
+      return 1
+      ;;
+    *)
+      if [[ -z "$name" ]]; then
+        name="$1"
+      else
+        echo "cwt-rm: unexpected argument '$1'" >&2
+        return 1
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "$name" ]]; then
+  echo "cwt-rm: workspace name required" >&2
+  echo "Usage: cwt-rm <name> [--delete-branch]" >&2
+  return 1
+fi
+
+local repo_root
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
+if [[ $? -ne 0 ]]; then
+  echo "cwt-rm: not inside a git repository" >&2
+  return 1
+fi
+
+if [[ -z "$worktree_base" ]]; then
+  worktree_base="$(dirname "$repo_root")/worktrees"
+fi
+local worktree_dir="${worktree_base}/${name}"
+
+# ── Detect the real branch name from the worktree before removing ─
+local real_branch=""
+if $delete_branch && [[ -d "$worktree_dir" ]]; then
+  real_branch=$(git -C "$worktree_dir" rev-parse --abbrev-ref HEAD 2>/dev/null)
+fi
+
+# ── Remove worktree ──────────────────────────────────────────────
+if [[ -d "$worktree_dir" ]]; then
+  echo "cwt-rm: removing worktree at ${worktree_dir}..."
+  git worktree remove "$worktree_dir" --force
+else
+  echo "cwt-rm: no worktree found at ${worktree_dir}"
+fi
+
+# ── Delete branch ────────────────────────────────────────────────
+if $delete_branch; then
+  if [[ -n "$real_branch" && "$real_branch" != "HEAD" ]]; then
+    echo "cwt-rm: deleting branch '${real_branch}'..."
+    git branch -D "$real_branch" 2>/dev/null
+  else
+    echo "cwt-rm: could not detect branch name, skipping branch deletion" >&2
+  fi
+fi
+
+echo "cwt-rm: done ✓"

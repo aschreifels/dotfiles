@@ -1,0 +1,321 @@
+# cwt - Crush Worktree Tool
+# Creates a git worktree + cmux workspace with a standard dev layout:
+#   ┌──────────────┬───────────┐
+#   │              │  lazygit  │
+#   │    crush     ├───────────┤
+#   │              │  helix .  │
+#   └──────────────┴───────────┘
+#
+# Usage:
+#   cwt <name>                        # New branch from default base
+#   cwt <name> -b develop             # New branch from develop
+#   cwt <name> --existing             # Use existing branch named <name>
+#   cwt <name> --branch feat/foo      # Checkout existing branch feat/foo
+#   cwt <name> --no-editor            # Skip launching programs, just set up splits
+#   cwt <name> -l DEST-123            # Prepend Linear ticket to branch name
+#
+# Environment:
+#   CWT_BRANCH_PREFIX    Optional prefix for branch names (e.g. "as" → "as/DEST-123_name")
+#   CWT_BASE_BRANCH      Default base branch (default: "main", falls back to "master")
+#   CWT_WORKTREE_DIR     Override worktree parent directory
+#   CWT_EDITOR           Editor command for bottom-right pane (default: "hx .")
+#   CWT_GIT_TOOL         Git TUI command for top-right pane (default: "lazygit")
+#   CWT_NO_LAZYGIT       Set to 1 to skip git tool pane
+#   CWT_NO_EDITOR        Set to 1 to skip editor pane
+#
+# The worktree is created at ../worktrees/<name> relative to the repo root.
+# The cmux workspace is named after <name>.
+
+local name=""
+local base_branch="${CWT_BASE_BRANCH:-}"
+local existing_branch=""
+local use_existing=false
+local skip_programs=false
+local worktree_base="${CWT_WORKTREE_DIR:-}"
+local linear_ticket=""
+local editor_cmd="${CWT_EDITOR:-hx .}"
+local git_cmd="${CWT_GIT_TOOL:-lazygit}"
+
+# ── Parse arguments ──────────────────────────────────────────────
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -b|--base)
+      base_branch="$2"
+      shift 2
+      ;;
+    --branch)
+      existing_branch="$2"
+      use_existing=true
+      shift 2
+      ;;
+    --existing)
+      use_existing=true
+      shift
+      ;;
+    --no-editor)
+      skip_programs=true
+      shift
+      ;;
+    --worktree-base)
+      worktree_base="$2"
+      shift 2
+      ;;
+    -l|--linear)
+      linear_ticket="$2"
+      shift 2
+      ;;
+    -h|--help)
+      cat <<'EOF'
+cwt - Crush Worktree Tool
+
+Creates a git worktree and cmux workspace with a standard dev layout.
+
+Usage:
+  cwt <name> [options]
+
+Options:
+  -b, --base <branch>       Base branch for new worktree (default: main or master)
+  --branch <branch>         Checkout an existing branch into the worktree
+  --existing                Checkout existing branch matching <name>
+  --no-editor               Create workspace/splits but don't launch programs
+  --worktree-base <path>    Override worktree parent directory
+  -l, --linear <TICKET>     Linear ticket ID (e.g. DEST-123). Prepends to branch name
+                            and injects context into the crush session.
+  -h, --help                Show this help
+
+Environment Variables:
+  CWT_BRANCH_PREFIX         Prefix for branch names (e.g. "as" → "as/TICKET_name")
+  CWT_BASE_BRANCH           Default base branch (auto-detects main/master if unset)
+  CWT_WORKTREE_DIR          Override worktree parent directory
+  CWT_EDITOR                Editor command for bottom-right pane (default: "hx .")
+  CWT_GIT_TOOL              Git TUI command for top-right pane (default: "lazygit")
+  CWT_NO_LAZYGIT            Set to 1 to skip git tool pane
+  CWT_NO_EDITOR             Set to 1 to skip editor pane
+
+Layout:
+  ┌──────────────┬───────────┐
+  │              │  lazygit  │
+  │    crush     ├───────────┤
+  │              │  helix .  │
+  └──────────────┴───────────┘
+
+Examples:
+  cwt my-feature                         # branch from main/master
+  cwt my-feature -b develop              # branch from develop
+  cwt my-feature --existing              # checkout existing branch
+  cwt hotfix --branch fix/urgent         # checkout existing 'fix/urgent'
+  cwt my-feature -l DEST-123             # branch 'DEST-123_my-feature'
+  CWT_BRANCH_PREFIX=as cwt feat -l X-1   # branch 'as/X-1_feat'
+EOF
+      return 0
+      ;;
+    -*)
+      echo "cwt: unknown option '$1' (use --help for usage)" >&2
+      return 1
+      ;;
+    *)
+      if [[ -z "$name" ]]; then
+        name="$1"
+      else
+        echo "cwt: unexpected argument '$1'" >&2
+        return 1
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "$name" ]]; then
+  echo "cwt: workspace name required (use --help for usage)" >&2
+  return 1
+fi
+
+# ── Resolve repo root ───────────────────────────────────────────
+local repo_root
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
+if [[ $? -ne 0 ]]; then
+  echo "cwt: not inside a git repository" >&2
+  return 1
+fi
+
+# ── Auto-detect default branch if not set ────────────────────────
+if [[ -z "$base_branch" ]]; then
+  if git show-ref --verify --quiet refs/heads/main 2>/dev/null; then
+    base_branch="main"
+  elif git show-ref --verify --quiet refs/heads/master 2>/dev/null; then
+    base_branch="master"
+  else
+    base_branch="main"
+  fi
+fi
+
+# ── Build branch name ────────────────────────────────────────────
+local branch_name=""
+if ! $use_existing; then
+  if [[ -n "$CWT_BRANCH_PREFIX" ]]; then
+    branch_name="${CWT_BRANCH_PREFIX}/"
+  fi
+  if [[ -n "$linear_ticket" ]]; then
+    branch_name="${branch_name}${linear_ticket}_"
+  fi
+  branch_name="${branch_name}${name}"
+else
+  branch_name="${existing_branch:-$name}"
+fi
+
+# ── Resolve worktree directory ───────────────────────────────────
+if [[ -z "$worktree_base" ]]; then
+  worktree_base="$(dirname "$repo_root")/worktrees"
+fi
+local worktree_dir="${worktree_base}/${name}"
+
+# ── Create worktree ──────────────────────────────────────────────
+if [[ -d "$worktree_dir" ]]; then
+  echo "cwt: worktree already exists at ${worktree_dir}, reusing it"
+else
+  mkdir -p "$worktree_base"
+
+  if $use_existing; then
+    echo "cwt: checking out existing branch '${branch_name}' → ${worktree_dir}"
+    git worktree add "$worktree_dir" "$branch_name"
+  else
+    echo "cwt: creating branch '${branch_name}' from '${base_branch}' → ${worktree_dir}"
+    git worktree add -b "$branch_name" "$worktree_dir" "$base_branch"
+  fi
+
+  if [[ $? -ne 0 ]]; then
+    echo "cwt: failed to create worktree" >&2
+    return 1
+  fi
+fi
+
+# ── Create cmux workspace & capture UUID ──────────────────────────
+echo "cwt: creating cmux workspace '${name}'..."
+local ws_output
+ws_output=$(cmux new-workspace --command "crush -c ${(q)worktree_dir}" 2>&1)
+
+local ws_id
+ws_id=$(echo "$ws_output" | awk '/^OK / { print $2 }')
+
+if [[ -z "$ws_id" ]]; then
+  echo "cwt: failed to create workspace (output: ${ws_output})" >&2
+  return 1
+fi
+
+echo "cwt: workspace created (${ws_id})"
+
+cmux select-workspace --workspace "$ws_id"
+cmux rename-workspace --workspace "$ws_id" "$name"
+sleep 0.3
+
+# ── Helper: execute a command in a panel ─────────────────────────
+_cwt_exec() {
+  local panel="$1"
+  shift
+  local cmd="$*"
+  cmux send-panel --workspace "$ws_id" --panel "$panel" "$cmd"
+  cmux send-key-panel --workspace "$ws_id" --panel "$panel" enter
+}
+
+# ── Helper: parse surface ID from split output ──────────────────
+_cwt_parse_surface() {
+  echo "$1" | awk '{ for(i=1;i<=NF;i++) if($i ~ /^surface:/) print $i }'
+}
+
+# ── Identify the initial crush surface ────────────────────────────
+local crush_surface
+crush_surface=$(cmux list-pane-surfaces --workspace "$ws_id" 2>&1 | awk '/surface:/ { for(i=1;i<=NF;i++) if($i ~ /^surface:/) { print $i; exit } }')
+
+# ── Create splits ────────────────────────────────────────────────
+local lazygit_surface=""
+local helix_surface=""
+
+if [[ "${CWT_NO_LAZYGIT:-0}" != "1" || "${CWT_NO_EDITOR:-0}" != "1" ]]; then
+  local split_right_output
+  split_right_output=$(cmux new-split right --workspace "$ws_id" 2>&1)
+  local right_surface
+  right_surface=$(_cwt_parse_surface "$split_right_output")
+
+  sleep 0.3
+
+  if [[ -z "$right_surface" ]]; then
+    echo "cwt: failed to create right split (output: ${split_right_output})" >&2
+    return 1
+  fi
+
+  if [[ "${CWT_NO_LAZYGIT:-0}" != "1" && "${CWT_NO_EDITOR:-0}" != "1" ]]; then
+    lazygit_surface="$right_surface"
+    local split_down_output
+    split_down_output=$(cmux new-split down --workspace "$ws_id" --panel "$lazygit_surface" 2>&1)
+    helix_surface=$(_cwt_parse_surface "$split_down_output")
+
+    if [[ -z "$helix_surface" ]]; then
+      echo "cwt: failed to create down split (output: ${split_down_output})" >&2
+      return 1
+    fi
+  elif [[ "${CWT_NO_LAZYGIT:-0}" == "1" ]]; then
+    helix_surface="$right_surface"
+  else
+    lazygit_surface="$right_surface"
+  fi
+fi
+
+# ── Launch programs in splits ────────────────────────────────────
+if ! $skip_programs; then
+  if [[ -n "$lazygit_surface" ]]; then
+    _cwt_exec "$lazygit_surface" "cd ${(q)worktree_dir} && ${git_cmd}"
+  fi
+  if [[ -n "$helix_surface" ]]; then
+    _cwt_exec "$helix_surface" "cd ${(q)worktree_dir} && ${editor_cmd}"
+  fi
+else
+  [[ -n "$lazygit_surface" ]] && _cwt_exec "$lazygit_surface" "cd ${(q)worktree_dir}"
+  [[ -n "$helix_surface" ]] && _cwt_exec "$helix_surface" "cd ${(q)worktree_dir}"
+fi
+
+# ── Inject Linear context into crush session ─────────────────────
+if [[ -n "$linear_ticket" && -n "$crush_surface" ]]; then
+  echo "cwt: waiting for crush to be ready..."
+  local _cwt_retries=0
+  local _cwt_max_retries=20
+  local _cwt_ready=false
+  while (( _cwt_retries < _cwt_max_retries )); do
+    local _cwt_screen
+    _cwt_screen=$(cmux read-screen --workspace "$ws_id" --surface "$crush_surface" --lines 5 2>&1)
+    if [[ "$_cwt_screen" == *">"* || "$_cwt_screen" == *"crush"* ]]; then
+      _cwt_ready=true
+      break
+    fi
+    sleep 0.5
+    (( _cwt_retries++ ))
+  done
+
+  if $_cwt_ready; then
+    sleep 0.3
+    local crush_prompt="Fetch the Linear issue ${linear_ticket} using the linear MCP tools. "
+    crush_prompt+="Read through the ticket title, description, comments, and any linked issues or documents. "
+    crush_prompt+="Familiarize yourself with how this ticket relates to the codebase. "
+    crush_prompt+="Then create a detailed plan of attack as a TODO list — outlining the files to change, "
+    crush_prompt+="the approach, and any risks or open questions. "
+    crush_prompt+="Wait for my review and confirmation before making any changes."
+
+    cmux send --workspace "$ws_id" --surface "$crush_surface" "${crush_prompt}\n"
+  else
+    echo "cwt: crush didn't become ready in time — send the prompt manually" >&2
+  fi
+fi
+
+# ── Set sidebar status ──────────────────────────────────────────
+cmux set-status branch "$branch_name" --icon git-branch --workspace "$ws_id" 2>/dev/null
+cmux set-status base "$base_branch" --icon git-merge --workspace "$ws_id" 2>/dev/null
+[[ -n "$linear_ticket" ]] && \
+  cmux set-status ticket "$linear_ticket" --icon lightning --color "#5e6ad2" --workspace "$ws_id" 2>/dev/null
+
+# Clean up helpers
+unfunction _cwt_exec _cwt_parse_surface 2>/dev/null
+
+echo "cwt: workspace '${name}' ready ✓"
+echo "cwt: branch ${branch_name}"
+echo "cwt: worktree at ${worktree_dir}"
+echo "cwt: workspace id ${ws_id}"
+[[ -n "$linear_ticket" ]] && echo "cwt: linear ticket ${linear_ticket} → crush prompt injected"
