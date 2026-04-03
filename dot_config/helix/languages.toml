@@ -1,4 +1,32 @@
 # ── Language Server Definitions ──────────────────────────────────────
+[language-server.lsp-ai]
+command = "lsp-ai"
+args = ["--stdio"]
+
+[language-server.lsp-ai.config.memory]
+file_store = {}
+
+[language-server.lsp-ai.config.models.zeta]
+type = "open_ai"
+completions_endpoint = "http://localhost:8000/v1/completions"
+model = "zed-industries/zeta"
+auth_token = "NOT_NEEDED"
+max_requests_per_second = 2
+
+[language-server.lsp-ai.config.completion]
+model = "zeta"
+
+[language-server.lsp-ai.config.completion.parameters]
+max_context = 2048
+max_tokens = 128
+fim = { start = "<fim_prefix>", middle = "<fim_suffix>", end = "<fim_middle>" }
+
+[language-server.ruff]
+command = "ruff-lsp"
+
+[language-server.pyright]
+command = "pyright-langserver"
+args = ["--stdio"]
 
 [language-server.vtsls]
 command = "vtsls"
@@ -69,76 +97,76 @@ args = ["--stdio"]
 
 [[language]]
 name = "typescript"
-language-servers = ["vtsls"]
+language-servers = ["vtsls", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "typescript"] }
 auto-format = true
 
 [[language]]
 name = "javascript"
-language-servers = ["vtsls"]
+language-servers = ["vtsls", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "babel"] }
 auto-format = true
 
 [[language]]
 name = "tsx"
-language-servers = ["vtsls"]
+language-servers = ["vtsls", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "typescript"] }
 auto-format = true
 
 [[language]]
 name = "jsx"
-language-servers = ["vtsls"]
+language-servers = ["vtsls", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "babel"] }
 auto-format = true
 
 [[language]]
 name = "json"
-language-servers = ["vscode-json-language-server"]
+language-servers = ["vscode-json-language-server", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "json"] }
 auto-format = true
 
 [[language]]
 name = "jsonc"
-language-servers = ["vscode-json-language-server"]
+language-servers = ["vscode-json-language-server", "lsp-ai"]
 
 [[language]]
 name = "html"
-language-servers = ["vscode-html-language-server"]
+language-servers = ["vscode-html-language-server", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "html"] }
 auto-format = true
 
 [[language]]
 name = "css"
-language-servers = ["vscode-css-language-server"]
+language-servers = ["vscode-css-language-server", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "css"] }
 auto-format = true
 
 [[language]]
 name = "scss"
-language-servers = ["vscode-css-language-server"]
+language-servers = ["vscode-css-language-server", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "scss"] }
 auto-format = true
 
 [[language]]
 name = "yaml"
-language-servers = ["yaml-language-server"]
+language-servers = ["yaml-language-server", "lsp-ai"]
 
 [[language]]
 name = "go"
-language-servers = ["gopls"]
+language-servers = ["gopls", "lsp-ai"]
 auto-format = true
 
 [[language]]
 name = "gomod"
-language-servers = ["gopls"]
+language-servers = ["gopls", "lsp-ai"]
 
 [[language]]
 name = "gowork"
-language-servers = ["gopls"]
+language-servers = ["gopls", "lsp-ai"]
 
 [[language]]
 name = "gotmpl"
-language-servers = ["gopls"]
+language-servers = ["gopls", "lsp-ai"]
 
 [[language]]
 name = "markdown"
@@ -148,4 +176,19 @@ soft-wrap.enable = true
 
 [[language]]
 name = "dockerfile"
-language-servers = ["docker-langserver"]
+language-servers = ["docker-langserver", "lsp-ai"]
+
+# ─── Elixir ──────────────────────────────────────────────────────────────────
+# elixir-ls is Helix's built-in default so no [language-server] block needed
+# unless your binary is in a non-standard location
+
+[[language]]
+name = "elixir"
+language-servers = ["elixir-ls", "lsp-ai"]
+
+# ─── Python ──────────────────────────────────────────────────────────────────
+
+
+[[language]]
+name = "python"
+language-servers = ["pyright", "ruff", "lsp-ai"]
