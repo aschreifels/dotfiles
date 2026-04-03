@@ -8,7 +8,7 @@ file_store = {}
 
 [language-server.lsp-ai.config.models.zeta]
 type = "open_ai"
-completions_endpoint = "http://localhost:8000/v1/completions"
+completions_endpoint = "http://localhost:1337/v1/completions"
 model = "zed-industries/zeta"
 auth_token = "NOT_NEEDED"
 max_requests_per_second = 2
