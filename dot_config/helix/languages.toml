@@ -51,6 +51,27 @@ propertyDeclarationTypes = { enabled = true }
 functionLikeReturnTypes = { enabled = true }
 enumMemberValues = { enabled = true }
 
+[language-server.typescript-language-server]
+command = "tsgo"
+args = ["--lsp", "--stdio"]
+
+[language-server.typescript-language-server.config.typescript]
+updateImportsOnFileMove.enabled = "always"
+suggest.completeFunctionCalls = true
+tsserver.enableTracing = true
+inlayHints.parameterNames.enabled = "all"
+inlayHints.parameterTypes.enabled = true
+inlayHints.variableTypes.enabled = true
+inlayHints.propertyDeclarationTypes.enabled = true
+inlayHints.functionLikeReturnTypes = true
+inlayHints.enumMemberValues.enabled = true
+format.enable = false
+format.semicolons = "remove"
+preferences.importModuleSpecifier = "non-relative"
+preferences.importModuleSpecifierEnding = "auto"
+tsserver.pluginPaths = ["typescript-plugin-css-modules", "./node_modules"]
+tsserver.experimental.enableProjectDiagnostics = true
+
 [language-server.vscode-css-language-server]
 command = "vscode-css-language-server"
 args = ["--stdio"]
@@ -97,7 +118,7 @@ args = ["--stdio"]
 
 [[language]]
 name = "typescript"
-language-servers = ["vtsls", "lsp-ai"]
+language-servers = ["tsgo", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "typescript"] }
 auto-format = true
 
@@ -109,7 +130,7 @@ auto-format = true
 
 [[language]]
 name = "tsx"
-language-servers = ["vtsls", "lsp-ai"]
+language-servers = ["tsgo", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "typescript"] }
 auto-format = true
 
