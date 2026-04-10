@@ -118,7 +118,7 @@ args = ["--stdio"]
 
 [[language]]
 name = "typescript"
-language-servers = ["tsgo", "lsp-ai"]
+language-servers = ["typescript-language-server", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "typescript"] }
 auto-format = true
 
@@ -130,7 +130,7 @@ auto-format = true
 
 [[language]]
 name = "tsx"
-language-servers = ["tsgo", "lsp-ai"]
+language-servers = ["typescript-language-server", "lsp-ai"]
 formatter = { command = "prettier", args = ["--parser", "typescript"] }
 auto-format = true
 
