@@ -21,6 +21,9 @@ left = ["mode", "spinner", "file-name", "read-only-indicator", "file-modificatio
 center = []
 right = ["diagnostics", "selections", "register", "position", "file-encoding", "file-line-ending", "file-type", "version-control"]
 
+[editor.lsp]
+display-inlay-hints = true
+
 [keys.normal]
 C-g = [
     ":write-all",
