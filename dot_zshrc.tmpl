@@ -112,6 +112,7 @@ done
 
 {{ if eq .machine "work" }}
 # -- Worktree PNPM management ------------------------------------
+export SOPS_AGE_KEY_FILE=/Users/alex.schreifels/.config/sops/age/keys.txt
 export RUSH_PNPM_STORE_PATH="/Users/alex.schreifels/projects/teamcurri/pnpm_store"
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
 export ANDROID_HOME=$HOME/Library/Android/sdk
