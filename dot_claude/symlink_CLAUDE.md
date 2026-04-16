@@ -1,1 +1,1 @@
-/Users/alex.schreifels/.config/ai/CONVENTIONS.md
+/Users/alex.schreifels/.config/ai/CLAUDE.md
