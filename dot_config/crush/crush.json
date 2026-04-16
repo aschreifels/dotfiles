@@ -6,6 +6,7 @@
     ],
     "context_paths": [
       "~/.config/ai/CONVENTIONS.md",
+      "~/.config/ai/CONVENTION-TRACKING.md",
       "~/.config/crush/skills/cmux-notifications/SKILL.md",
       "~/.config/crush/skills/cwt-orchestrator/SKILL.md"
     ]
