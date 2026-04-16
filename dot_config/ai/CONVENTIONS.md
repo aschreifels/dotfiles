@@ -34,3 +34,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Test after every change.** Build, lint, and run relevant tests before calling it done.
 - **Write a failing test before fixing a bug** when test infrastructure exists.
 - **Don't fix unrelated bugs** you find along the way — mention them, but don't expand scope.
+
+## Meta
+
+@~/.config/ai/CONVENTION-TRACKING.md
