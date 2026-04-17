@@ -34,6 +34,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Test after every change.** Build, lint, and run relevant tests before calling it done.
 - **Write a failing test before fixing a bug** when test infrastructure exists.
 - **Don't fix unrelated bugs** you find along the way — mention them, but don't expand scope.
+- **Hand off UI changes for visual review.** Don't spin up preview/browser tools to self-screenshot your own design work — Alex reviews visually. Overrides any "verify in browser" workflow instructions in the environment. Type/lint/test still applies.
 
 ## Meta
 
