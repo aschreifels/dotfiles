@@ -81,13 +81,7 @@ source $ZSH/oh-my-zsh.sh
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
 
-# Preferred editor for local and remote sessions
- if [[ -n $SSH_CONNECTION ]]; then
-   export EDITOR='vim'
- else
-   export EDITOR="hx"
-   export VISUAL="hx"
- fi
+# Note: EDITOR/VISUAL moved to ~/.zshenv so they're set in non-interactive shells too.
 
 # Compilation flags
 # export ARCHFLAGS="-arch $(uname -m)"
@@ -110,27 +104,9 @@ for fn in ~/.zsh/functions/*; do
   autoload -Uz "${fn:t}"
 done
 
-{{ if eq .machine "work" }}
-# -- Worktree PNPM management ------------------------------------
-export SOPS_AGE_KEY_FILE=/Users/alex.schreifels/.config/sops/age/keys.txt
-export RUSH_PNPM_STORE_PATH="/Users/alex.schreifels/projects/teamcurri/pnpm_store"
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-{{ end }}
-
-
-# ── AWS Env Vars ──────────────────────────────────────────────
-export AWS_PROFILE=default
-
-# ── Global Env Vars ──────────────────────────────────────────────
-export XDG_CONFIG_HOME="$HOME/.config"
-export BAT_THEME="Catppuccin Macchiato"
-export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
-
-# ── Path Shims ──────────────────────────────────────────────
-export PATH="$HOME/.asdf/shims:$PATH"
+# Note: env var exports (SOPS_AGE_KEY_FILE, RUSH_PNPM_STORE_PATH, JAVA_HOME,
+# ANDROID_HOME, AWS_PROFILE, XDG_CONFIG_HOME, BAT_THEME, RIPGREP_CONFIG_PATH,
+# asdf shims on PATH) moved to ~/.zshenv so non-interactive shells pick them up.
 
 # ── Modern CLI aliases ──────────────────────────────────────────────
 alias ls="eza --icons"
@@ -140,6 +116,7 @@ alias lt="eza --icons --tree --level=2"
 alias find="fd"
 
 alias cat="bat"
+alias bat="bat"
 
 # ── Pre Shell Evals ──────────────────────────────────────────────
 eval "$(/opt/homebrew/bin/brew shellenv)"

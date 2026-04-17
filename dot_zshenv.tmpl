@@ -1,0 +1,32 @@
+# ~/.zshenv — sourced for ALL zsh invocations (including non-interactive
+# subprocesses like Claude Code, cron, scripts). Keep this file fast and
+# free of interactive-only config (aliases, prompts, completion, plugins).
+
+# Preferred editor for local and remote sessions
+if [[ -n $SSH_CONNECTION ]]; then
+  export EDITOR='vim'
+else
+  export EDITOR="hx"
+  export VISUAL="hx"
+fi
+
+{{ if eq .machine "work" }}
+# -- Worktree PNPM management ------------------------------------
+export SOPS_AGE_KEY_FILE=/Users/alex.schreifels/.config/sops/age/keys.txt
+export RUSH_PNPM_STORE_PATH="/Users/alex.schreifels/projects/teamcurri/pnpm_store"
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+{{ end }}
+
+# ── AWS Env Vars ──────────────────────────────────────────────
+export AWS_PROFILE=default
+
+# ── Global Env Vars ──────────────────────────────────────────────
+export XDG_CONFIG_HOME="$HOME/.config"
+export BAT_THEME="Catppuccin Macchiato"
+export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
+
+# ── Path Shims ──────────────────────────────────────────────
+export PATH="$HOME/.asdf/shims:$PATH"
