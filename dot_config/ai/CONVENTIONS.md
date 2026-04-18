@@ -17,6 +17,11 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Don't copy bad patterns.** If existing code does something wrong, do it right.
 - **Log levels matter.** Use `warn` for expected business events (e.g., no results found). Use `error` only for actual failures. Don't introduce new error-level logs for normal control flow.
 
+## Data-Driven Features
+
+- **Build the data edge up front — don't hardcode content in modules as a shortcut.** For any feature that's inherently data-driven (events, sermons, announcements, partners, etc.), start with the framework's data primitive (Ash resource + migration + code_interface in Ash; Ecto schema + context in vanilla Phoenix; Prisma model + repository in Node; etc.), and stub placeholder content by **seeding** through that edge. The UI calls the real data interface from day one, so when real content or an admin UI lands later, the display layer doesn't change. Static in-code content modules are reserved for tiny, rarely-changing content that will never need admin CRUD (e.g. a small team-bio list).
+- **Ask "will a non-engineer eventually manage this?"** If yes, it's data-driven — skip the static-module shortcut.
+
 ## Error Handling
 
 - **Don't silently swallow errors.** If you catch, at least log with context (IDs, job info, etc.).
