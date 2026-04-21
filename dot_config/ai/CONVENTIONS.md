@@ -7,7 +7,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Never force push.** No `--force`, `--force-with-lease`, or `-f`. If a push is rejected, inform me rather than forcing.
 - **Never amend pushed commits.** Create new commits instead.
 - **Don't revert changes** unless they caused errors or I explicitly ask.
-- **Don't push to remote** unless I explicitly ask.
+- **Don't push to remote** unless I explicitly ask. Always confirm before any `git push`. Incremental local commits capturing discrete bodies of progress are welcome.
 
 ## Code Changes
 
