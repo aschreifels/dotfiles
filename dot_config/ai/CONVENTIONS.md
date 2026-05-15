@@ -8,6 +8,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Never amend pushed commits.** Create new commits instead.
 - **Don't revert changes** unless they caused errors or I explicitly ask.
 - **Don't push to remote** unless I explicitly ask. Always confirm before any `git push`. Incremental local commits capturing discrete bodies of progress are welcome.
+- **Merge, never rebase.** When pulling or integrating master into a feature branch, always use `git merge` — never `git pull --rebase` or `git rebase`. Rebasing rewrites history and can silently drop or duplicate commits.
 
 ## Code Changes
 
