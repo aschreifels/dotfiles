@@ -22,30 +22,39 @@ The default posture is *do not post*. Posting is a separate, explicit step. Trea
   SKILL.md                  ← you are here
   rubric/
     _core.md                ← severity, confidence, false positives, voice (always loaded)
-    security.md             ← always-on
-    correctness.md          ← always-on
-    conventions.md          ← always-on
-    maintainability.md      ← always-on
-    performance.md          ← always-on
+    security/               ← always-on, language-split
+      _shared.md            ← language-agnostic security rules
+      ts.md                 ← TS/JS/Node-specific
+      # py.md, go.md, ... drop a file in to add a language
+    correctness/            ← always-on, language-split
+      _shared.md
+      ts.md
+    performance/            ← always-on, language-split (non-DB)
+      _shared.md
+      ts.md
+    tests/                  ← gated, language-split
+      _shared.md
+      ts.md
+    conventions.md          ← always-on, language-agnostic
+    maintainability.md      ← always-on, language-agnostic
     db.md                   ← gated: SQL / Prisma / migrations
     api.md                  ← gated: backend handlers / services
     ui.md                   ← gated: React / .tsx
-    tests.md                ← gated: *.test.* / __tests__ / bug-fix PRs
   overlays/
     README.md               ← how overlays work
     curri.md                ← Curri (teamcurri/curri) blocking rules
 ```
 
-Add a new repo's rules by creating a file in `overlays/`. See [overlays/README.md](overlays/README.md).
+Add a new repo's rules by creating a file in `overlays/`. See [overlays/README.md](overlays/README.md). Add a new language slice by dropping a `<lang>.md` into any language-split pack — no registration needed.
 
 ---
 
 ## Phases
 
 ```
-parse → fetch → route → analyze → present → iterate ⇄ refine → (optional) preview → post
-                                                ↑              |
-                                                └──────────────┘
+parse → fetch → detect-langs → route → analyze → present → iterate ⇄ refine → (optional) preview → post
+                                                            ↑              |
+                                                            └──────────────┘
 ```
 
 ### 1. Parse the invocation
@@ -81,25 +90,49 @@ Bail early — and tell Alex — if:
 
 For **local-branch mode**, use `git diff master...HEAD`, `git log master..HEAD --oneline`, and `git remote get-url origin` for the repo slug. Skip the `gh api` calls.
 
-### 3. Route — pick packs and overlays
+### 3a. Detect languages
 
-Always load:
+Build the set of languages touched by the diff. Source of truth is the changed-file list from `gh pr view --json files` (or `git diff --name-only` in local mode).
+
+| Language | Extensions / paths |
+|----------|--------------------|
+| `ts` | `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs` |
+| `py` | `.py`, `.pyi` |
+| `go` | `.go` |
+| `rb` | `.rb`, `Gemfile`, `*.gemspec` |
+| `rs` | `.rs`, `Cargo.toml` |
+| `java` | `.java`, `.kt`, `.kts`, `.gradle` |
+| `sql` | `.sql` (also triggers the `db` pack) |
+| `sh` | `.sh`, `.bash`, `.zsh` |
+
+A PR can touch multiple languages — load every matching slice. Ignore extensions that aren't security/correctness/perf-relevant (`.md`, `.json`, `.yaml`, `.lock`, generated files).
+
+**Adding a new language:** drop a `<lang>.md` into the relevant language-split pack and add the row above. Nothing else to register.
+
+### 3b. Route — pick packs, slices, and overlays
+
+Always load (language-agnostic):
 
 - [rubric/_core.md](rubric/_core.md)
-- [rubric/security.md](rubric/security.md)
-- [rubric/correctness.md](rubric/correctness.md)
 - [rubric/conventions.md](rubric/conventions.md)
 - [rubric/maintainability.md](rubric/maintainability.md)
-- [rubric/performance.md](rubric/performance.md)
+
+Always load (language-split — `_shared.md` + slices for each detected language):
+
+- [rubric/security/](rubric/security/) → `_shared.md` + every `<lang>.md` for `<lang>` in the detected set, **if the slice exists**
+- [rubric/correctness/](rubric/correctness/) → same composition rule
+- [rubric/performance/](rubric/performance/) → same composition rule
+
+If a language slice doesn't exist for a detected language, fall back to `_shared.md` for that pack and continue — but mention it in the routing line so Alex knows coverage is partial (e.g., `correctness/py.md missing — _shared only`).
 
 Gated packs — load only if a changed file matches:
 
-| Pack | Triggers (file path / extension / content patterns) |
-|------|-----------------------------------------------------|
+| Pack | Triggers |
+|------|----------|
 | [rubric/db.md](rubric/db.md) | `prisma/`, `*.prisma`, `*.sql`, `*/migrations/*`, files importing a Prisma client, files containing `findMany` / `$queryRaw` / `$executeRaw` |
 | [rubric/api.md](rubric/api.md) | `apps/*api*/`, `services/*/src/`, route handlers, GraphQL schemas / resolvers, worker job handlers |
 | [rubric/ui.md](rubric/ui.md) | `*.tsx`, `*.jsx`, `apps/*app*/`, `apps/*admin*/`, `mobile/*/`, component packages, CSS / styled-components files |
-| [rubric/tests.md](rubric/tests.md) | `*.test.*`, `*.spec.*`, `__tests__/`, `e2e/`, `cypress/`, `playwright/`, **or** the PR is a bug fix (per title / body / branch name) |
+| [rubric/tests/](rubric/tests/) | `*.test.*`, `*.spec.*`, `__tests__/`, `e2e/`, `cypress/`, `playwright/`, `tests/`, `test/`, **or** the PR is a bug fix. Also language-split — same composition rule. |
 
 Overlays — read every file under `overlays/*.md`, parse `applies_when:`, load any that match the current repo. Predicate semantics:
 
@@ -108,19 +141,26 @@ Overlays — read every file under `overlays/*.md`, parse `applies_when:`, load 
 - `file_exists: path/to/marker` — also requires this file to exist in the checkout
 - Multiple conditions in one overlay are **AND**-ed.
 
-Echo to Alex the routing decision in one line:
+Echo to Alex the routing decision in one line. Example:
 
 ```
-Loaded: core, security, correctness, conventions, maintainability, performance, db, api, tests · overlay: curri
+Langs: ts · Loaded: core, conventions, maintainability, security{_shared,ts}, correctness{_shared,ts}, performance{_shared,ts}, db, api, ui, tests{_shared,ts} · overlay: curri
+```
+
+If multi-language:
+
+```
+Langs: ts, py · Loaded: …, security{_shared,ts,py}, correctness{_shared,ts} (py slice missing — _shared only), …
 ```
 
 ### 4. Analyze
 
-Launch parallel sub-agents (`general-purpose` or `Explore`). One sub-agent per loaded pack. Each sub-agent gets:
+Launch parallel sub-agents (`general-purpose` or `Explore`). One sub-agent per loaded **pack** (not per slice — a sub-agent for `security` sees `_shared.md` plus all the loaded language slices for that pack as a single bundle of guidance). Each sub-agent gets:
 
 - The unified diff
-- The pack's rubric file as authoritative guidance
+- The pack's loaded files concatenated: `_shared.md` first, then each language slice — so the agent reads universal rules then language footguns
 - Any overlay sections that augment that pack
+- The list of detected languages (so the agent can scope its scan)
 - The relevant `AGENTS.md` / `CLAUDE.md` contents
 - Standing instructions: report each finding as `{ category, severity, title, file, lines, evidence_snippet, explanation, suggested_fix, confidence }`
 
@@ -309,7 +349,9 @@ This file is the source of truth for the current state of the review between tur
 
 ## Adding rules
 
-- **A rule that applies to every repo** — edit the relevant pack in `rubric/`.
-- **A rule that applies only to one repo** — add or extend an overlay in `overlays/`. See [overlays/README.md](overlays/README.md).
+- **A rule that applies to every repo, every language** — edit the relevant pack's `_shared.md` (for language-split packs) or `<pack>.md` (for flat packs).
+- **A rule that applies to every repo, one language** — edit the language slice (`<pack>/<lang>.md`).
+- **A rule that applies to one repo** — add or extend an overlay in `overlays/`. See [overlays/README.md](overlays/README.md).
+- **A new language** — drop `<lang>.md` into the relevant language-split pack and add the row to the "Detect languages" table above.
 
 After any edit, `chezmoi add ~/.claude/skills/pr-review/...` to persist to dotfiles.

@@ -31,16 +31,18 @@ Each finding gets exactly one primary category. Multi-category findings pick the
 
 | Category | Pack |
 |----------|------|
-| `security` | [security.md](security.md) |
+| `security` | [security/](security/) — `_shared.md` + per-language slices |
 | `db` | [db.md](db.md) |
-| `performance` | [performance.md](performance.md) |
-| `correctness` | [correctness.md](correctness.md) |
+| `performance` | [performance/](performance/) — `_shared.md` + per-language slices |
+| `correctness` | [correctness/](correctness/) — `_shared.md` + per-language slices |
 | `conventions` | [conventions.md](conventions.md) |
 | `maintainability` | [maintainability.md](maintainability.md) |
-| `tests` | [tests.md](tests.md) |
+| `tests` | [tests/](tests/) — `_shared.md` + per-language slices |
 | `ui` | [ui.md](ui.md) |
 | `api` | [api.md](api.md) |
 | `style` | (covered in [conventions.md](conventions.md)) |
+
+Packs that are directories (`security/`, `correctness/`, `performance/`, `tests/`) split into a language-agnostic `_shared.md` plus per-language slices (`ts.md`, `py.md`, `go.md`, etc.). The skill's router loads `_shared.md` always, then any language slices matching languages detected in the diff. New languages get added by dropping a new file into the relevant directory — no other registration needed.
 
 ---
 
