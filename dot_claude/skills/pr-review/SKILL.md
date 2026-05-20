@@ -1,17 +1,16 @@
 ---
 name: pr-review
-description: Collaborative, in-depth pull request review. Fetches a PR (by URL, `owner/repo#N`, `#N`, or current branch), routes to domain-specific rubric packs (db, api, ui, tests) plus always-on packs (security, correctness, conventions, maintainability, performance), applies any matching repo overlay (e.g., Curri's blocking rules), and presents findings grouped by severity with stable numeric IDs so Alex can quickly drop, keep, edit, or expand specific comments before anything is posted. Use this skill whenever Alex says "review this PR", "review PR <url>", "/pr-review", "code review this branch", or otherwise asks for a structured pre-post review pass on a pull request. Never post comments to GitHub without explicit confirmation.
+description: Collaborative, in-depth code review for either a pull request (PR mode) or a local branch in progress (self-review mode). Fetches the diff (PR by URL / `owner/repo#N` / `#N`, or branch via `git diff <base>...HEAD`), routes to domain-specific rubric packs (db, api, ui, tests) plus always-on packs (security, correctness, conventions, maintainability, performance) with per-language slices, applies any matching repo overlay, and presents findings grouped by severity with stable numeric IDs so Alex can drop, keep, edit, expand, or — in self-review mode — apply fixes inline. Use this skill whenever Alex says "review this PR", "review PR <url>", "review my branch", "self-review", "/pr-review", "code review this branch", or otherwise asks for a structured review pass. Never post comments to GitHub without explicit confirmation; never apply self-review fixes without explicit confirmation.
 ---
 
 # pr-review
 
-A two-phase, human-in-the-loop PR review:
+A collaborative, human-in-the-loop code review skill with two modes:
 
-1. **Analyze** — fetch the PR, route to the rubric packs and overlays that apply, run focused sub-agents, dedupe.
-2. **Iterate** — present findings as a numbered, severity-grouped list. Alex drops / keeps / edits / expands.
-3. **Optionally post** — only on explicit confirmation, with a final preview step.
+- **PR mode** (default when a PR ref is given or the branch has an open PR): produces a polished review draft, optionally posted as a GitHub review with inline comments.
+- **Self-review mode**: produces a self-directed punch list for a branch you're actively working on. Supports applying fixes inline (`fix B1`) and drafting a commit message. No GitHub posting.
 
-The default posture is *do not post*. Posting is a separate, explicit step. Treat this skill as a sparring partner that produces a polished review draft, not an autonomous commenter.
+The default posture is *do not post, do not apply*. Both posting (PR mode) and applying fixes (self-review mode) are explicit, confirmation-gated actions. Treat this skill as a sparring partner that produces a polished draft — not an autonomous commenter or auto-fixer.
 
 ---
 
@@ -43,35 +42,59 @@ The default posture is *do not post*. Posting is a separate, explicit step. Trea
   overlays/
     README.md               ← how overlays work
     curri.md                ← Curri (teamcurri/curri) blocking rules
+  modes/
+    README.md               ← how modes work + detection rules
+    self-review.md          ← deltas for self-review mode (PR mode is documented inline below)
 ```
 
-Add a new repo's rules by creating a file in `overlays/`. See [overlays/README.md](overlays/README.md). Add a new language slice by dropping a `<lang>.md` into any language-split pack — no registration needed.
+Add a new repo's rules by creating a file in `overlays/`. See [overlays/README.md](overlays/README.md). Add a new language slice by dropping a `<lang>.md` into any language-split pack — no registration needed. Add a new mode by dropping a file in `modes/` — see [modes/README.md](modes/README.md).
 
 ---
 
 ## Phases
 
 ```
-parse → fetch → detect-langs → route → analyze → present → iterate ⇄ refine → (optional) preview → post
-                                                            ↑              |
-                                                            └──────────────┘
+parse → mode-select → fetch → detect-langs → route → analyze → present → iterate ⇄ refine → (mode-specific finish)
+                                                                            ↑              |
+                                                                            └──────────────┘
 ```
+
+The finish step depends on the mode:
+- **PR mode**: optional `preview post` → `post` (GitHub review with inline comments).
+- **Self-review mode**: `fix B1` / `fix all B` (apply suggested fixes) and/or `commit` (draft a commit message).
 
 ### 1. Parse the invocation
 
-Accept any of:
+PR-mode forms — accept any of:
 
 - Full PR URL: `https://github.com/teamcurri/curri/pull/21473`
 - Shorthand: `teamcurri/curri#21473`
 - Repo-relative: `#21473` (assumes current repo via `gh repo view`)
 - Bare number: `21473` (same as `#21473`)
-- No argument → review the current branch's diff against `master` (local-branch mode).
 
-If no arg and the current branch has an open PR, look it up via `gh pr view --json number,url,title,headRefName`.
+Self-review-mode forms:
 
-If the ref can't be resolved unambiguously, ask once for clarification.
+- `--self`
+- No argument + no open PR for the current branch → defaults to self-review (see mode selection below)
+- Self-review-specific flags: `--committed` (default) / `--uncommitted` / `--staged` / `--all` / `--base <ref>`
 
-### 2. Fetch context
+Mode-override flags (`--pr`, `--self`) win over everything else. If the ref can't be resolved unambiguously, ask once for clarification.
+
+### 1b. Mode selection
+
+Per [modes/README.md](modes/README.md):
+
+1. `--pr` / `--self` flag → explicit choice.
+2. PR ref provided (URL / `owner/repo#N` / bare number) → **pr**.
+3. "self-review"-shaped phrasing ("review my branch", "review my changes", "self-review", "review what I've done", "/self-review") → **self-review**.
+4. No ref + current branch has an open PR → **pr** (look up via `gh pr view --json number,url`).
+5. No ref + no PR → **self-review**.
+
+Announce the chosen mode in one line and continue. If self-review, **switch to following [modes/self-review.md](modes/self-review.md)** for the deltas to fetch / present / iterate / finish. Everything in this file from here down describes PR mode; self-review.md only documents *what changes*.
+
+### 2. Fetch context (PR mode)
+
+> Self-review mode: skip this entirely — see [modes/self-review.md](modes/self-review.md) § "Fetch — local sources only".
 
 In parallel:
 
@@ -88,7 +111,7 @@ Bail early — and tell Alex — if:
 - PR is a draft (note it, continue)
 - We've already reviewed this exact head SHA this session (offer to skim only new commits)
 
-For **local-branch mode**, use `git diff master...HEAD`, `git log master..HEAD --oneline`, and `git remote get-url origin` for the repo slug. Skip the `gh api` calls.
+(Self-review mode handles all local-branch fetching per [modes/self-review.md](modes/self-review.md).)
 
 ### 3a. Detect languages
 
@@ -171,9 +194,11 @@ After agents return, the main thread:
 3. **Sanity-checks every Blocker** by reading the surrounding code yourself. A false-positive Blocker erodes trust faster than a missed Medium.
 4. **Scopes to changed lines** — drop findings on lines the PR didn't touch unless they directly govern the change's correctness.
 
-### 5. Present
+### 5. Present (PR mode)
 
-Write the review to `.claude-review/PR-<num>.md` (or `.claude-review/branch-<branch>.md` in local mode) in the current working directory so Alex reads diffs in Zed. Create the directory if needed. Append `.claude-review/` to `.gitignore` if it isn't already there.
+> Self-review mode uses a different format and verdict labels — see [modes/self-review.md](modes/self-review.md) § "Present — voice and format shift".
+
+Write the review to `.claude-review/PR-<num>.md` in the current working directory so Alex reads diffs in Zed. Create the directory if needed. Append `.claude-review/` to `.gitignore` if it isn't already there.
 
 Then output the same content to chat. Format:
 
@@ -224,7 +249,7 @@ Then output the same content to chat. Format:
 - **IDs are stable for the life of the session.** Dismissing `H3` does *not* renumber `H4` to `H3`. Renumbering breaks Alex's mental model.
 - New findings (from `re-scan` or `add a finding: …`) get the next free number in their severity — never a reused one.
 
-After the listing, show the command footer:
+After the listing, show the command footer. PR mode:
 
 ```
 Refine with natural language, e.g.
@@ -238,6 +263,23 @@ Refine with natural language, e.g.
   re-scan          (author pushed new commits)
   preview post     (show exactly what will be sent to GitHub)
   post             (post the current set — will confirm first)
+```
+
+Self-review mode footer (per [modes/self-review.md](modes/self-review.md)):
+
+```
+Refine with natural language, e.g.
+  drop B2, H1, H3
+  drop all L
+  keep only blockers
+  edit H2: <new wording>
+  expand M1
+  merge B2 into B1
+  add a finding: <freeform>
+  re-scan          (after you edit / commit more)
+  fix B1           (preview a concrete Edit, confirm before applying)
+  fix all B        (bulk-fix Blockers, with per-fix confirmation)
+  commit           (draft a commit message from the diff)
 ```
 
 ### 6. Iterate
@@ -261,7 +303,9 @@ After every iteration command:
 - Rewrite `.claude-review/PR-<num>.md` (active findings only; append a "Dismissed" section at the bottom for traceability).
 - Echo the delta and current counts: `B:n  H:n  M:n  L:n  Q:n`. Don't re-print the entire listing unless asked.
 
-### 7. Preview post
+### 7. Preview post (PR mode only)
+
+> Self-review mode skips this phase entirely. Self-review's finish step is `fix` / `commit` — see [modes/self-review.md](modes/self-review.md).
 
 When Alex says `preview post` or `post`, **do not call `gh` yet**. Render the exact payload first:
 
@@ -295,7 +339,7 @@ Construction rules:
 
 Ask: "Send this? (yes / edit / cancel)"
 
-### 8. Post
+### 8. Post (PR mode only)
 
 Only after explicit confirmation:
 
@@ -325,14 +369,27 @@ Where `payload.json` is:
 
 ## Behavioural rules
 
-- **Don't post unprompted.** Even on "looks great, ship it" — confirm "post the review?" before calling `gh`.
+Universal (both modes):
+
 - **Don't invent findings.** Short and honest beats padded.
 - **Don't re-flag CI-caught issues** (lint, typecheck, formatting, imports, broken tests).
 - **Cite the rule.** When invoking an `AGENTS.md` or overlay rule, quote or link it.
 - **Confidence threshold matters.** When in doubt about a Blocker, downgrade to High and say what would raise confidence.
 - **Respect scope.** Findings on unchanged lines only if they directly govern the change.
-- **No emojis in posted text** (chat is fine).
 - **Don't open browser / preview tools for UI review** — Alex reviews visually himself. Surface UI findings that aren't obvious from a screenshot (hooks, perf, a11y).
+- **Confirmation required for side effects.** Posting (PR mode), applying fixes (self-review), or committing (self-review) all require explicit "yes" before the action runs.
+
+PR mode:
+
+- **Don't post unprompted.** Even on "looks great, ship it" — confirm "post the review?" before calling `gh`.
+- **No emojis in posted text** (chat is fine).
+
+Self-review mode (see [modes/self-review.md](modes/self-review.md) for the full list):
+
+- **Don't auto-fix.** `fix B1` previews the Edit and waits for "yes".
+- **Don't commit unprompted.** `commit` is a verb Alex types.
+- **Don't push.** Ever.
+- **No `post` / `approve` / `request changes`.** Respond: "self-review mode — no PR target."
 
 ---
 
@@ -340,7 +397,8 @@ Where `payload.json` is:
 
 ```
 .claude-review/
-  PR-<num>.md      (or branch-<branch>.md for local mode)
+  PR-<num>.md           (PR mode)
+  branch-<branch>.md    (self-review mode)
 ```
 
 This file is the source of truth for the current state of the review between turns. The chat is for the live conversation; the file is for Zed reading and re-opening sessions.
