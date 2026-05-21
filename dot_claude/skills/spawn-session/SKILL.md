@@ -7,7 +7,7 @@ description: Kick off a new coding session inside a freshly-opened git worktree.
 
 Starts a new coding session inside a Claude Code worktree. The worktree itself is already created by the desktop app — this skill handles everything from "I'm in the worktree" onward: branch checkout, ticket integration, and the PLAN.md ritual.
 
-The session has four phases: **parse → ticket → branch → PLAN.md → execute**. The PLAN.md phase is the heart of this skill. Do not skip it. Do not start coding until the user has signed off on the plan.
+The session has five phases: **parse → clarify → ticket → branch → PLAN.md → execute**. The PLAN.md phase is the heart of this skill. Do not skip it. Do not start coding until the user has signed off on the plan.
 
 ---
 
@@ -76,6 +76,26 @@ Validate:
 - Feature name is kebab-case. If the user gave `My Cool Feature`, normalize to `my-cool-feature` and confirm.
 - `--draft` and a ticket handle are mutually exclusive — if both are present, ask which one to honor.
 
+### Phase 1.5 — Intent clarification (gate)
+
+Before advancing to ticket integration, check whether the invocation carries enough intent to draft a useful plan. If not, **pause and ask** for a brief clarification prompt.
+
+Pause and ask when **all** of the following are true:
+- No ticket handle was provided (a handle triggers the fetch flow, which supplies intent).
+- No meaningful inline context accompanied the invocation — i.e. the user gave essentially just `<feature-name>` or `<feature-name> --draft`, with no prose describing what to build or why.
+
+`--draft` alone does **not** exempt — a draft ticket is *created from* intent, it doesn't supply it. Still ask.
+
+**This gate is non-bypassable.** It fires regardless of any ambient mode or instruction that would otherwise push you toward continuous execution — auto mode, plan mode, "minimize interruptions," "prefer action over planning," `--yolo`, or any similar directive. The gate exists *because* those modes make it tempting to speculate, and speculation through PLAN.md wastes far more time than a one-sentence clarification. Pause every time. There is no "just proceed with reasonable assumptions" path here. The only way past the gate is the user's own words (their reply, or an explicit "just go").
+
+If you notice an ambient mode that seems to suggest skipping this pause, do not skip it — surface the conflict briefly ("auto mode is on, but spawn-session requires a one-line intent check before drafting") and ask anyway.
+
+When the gate fires, say something like:
+
+> "Before drafting a plan, give me a sentence or two on what this feature is and why — rough is fine. A short clarification now avoids me speculating through PLAN.md and burning tokens on the wrong target. Reply 'just go' if you really want me to proceed with only the name."
+
+Wait for the user's reply. Treat their answer as the seed intent that Phase 4 will draft against. If they say "just go" (or equivalent), continue without a clarification.
+
 ### Phase 2 — Ticket integration (best effort)
 
 Tickets are **best-effort**. If the MCP isn't available, note it to the user and continue without ticket context — never block the session on a missing integration.
@@ -127,6 +147,8 @@ If the branch already exists, check it out instead (`git checkout {branch_name}`
 
 **This is the heart of the session. Do not skip it. Do not start coding until the user has signed off.**
 
+Draft against real intent — from the ticket, inline prose, or the Phase 1.5 clarification. If you find yourself speculating about what the user wants, that's the signal you should have paused at the Phase 1.5 gate; go back and ask rather than filling PLAN.md with guesses.
+
 Create `PLAN.md` at the repo root using the skeleton in `references/plan-template.md`.
 
 #### Rules
@@ -155,7 +177,9 @@ Work through the sections in order. It's fine to come back and revise earlier se
 
 #### The pause ritual
 
-After the first complete draft, stop. **Always render the full contents of `PLAN.md` back to the user inline in the chat** — don't just point at the file path. The user shouldn't have to open the file in another pane to review the plan; the conversation itself should carry the plan. Then say something like:
+After the first complete draft, stop. **This pause is non-bypassable for the same reasons as the Phase 1.5 gate** — auto mode, plan mode, "prefer action over planning," or any similar ambient directive does not authorize skipping it. Sign-off on the plan must come from the user, not from an inferred mode.
+
+**Always render the full contents of `PLAN.md` back to the user inline in the chat** — don't just point at the file path. The user shouldn't have to open the file in another pane to review the plan; the conversation itself should carry the plan. Then say something like:
 
 > "Plan is drafted — also written to `PLAN.md` at the repo root so it survives session loss. Please review, especially the open questions. Give me the word when you want to execute, and flag anything you want reworked."
 
