@@ -1,0 +1,22 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "/Users/alex.schreifels/projects/necro-kb",
+      "/Users/alex.schreifels/.config/ai"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push --force-with-lease*)",
+      "Bash(git rebase*)",
+      "Bash(git pull --rebase*)",
+      "Bash(git reset --hard*)"
+    ]
+  }
+}
