@@ -31,6 +31,10 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **DRY — rule of 3.** If the same logic appears in 3 places, extract it.
 - **Prefer readability over micro-optimization.** Favor expressive collection methods (flatMap, reduce, etc.) over raw loops when the performance difference is negligible relative to I/O or other dominant costs.
 
+## Tooling
+
+- **Use app/service-local scripts before reaching for the core package directly.** When a service's `package.json` defines scripts wrapping a tool (e.g. `rushx puff` for the driver service), use those instead of invoking the core package CLI from its own directory. The local script has the app name and defaults already baked in.
+
 ## Process
 
 - **Test after every change.** Build, lint, and run relevant tests before calling it done.
