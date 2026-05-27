@@ -35,6 +35,19 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 
 - **Prefer project-local scripts over invoking tools directly.** When a project defines scripts that wrap a tool (e.g. in `package.json`, `Makefile`, `justfile`), use those instead of calling the underlying CLI directly. Local scripts have project-specific flags, paths, and defaults already baked in — reaching past them risks missing that context.
 
+## Pull Requests
+
+PR bodies follow this structure — omit a section only if it genuinely doesn't apply:
+
+1. **Problem** — one short paragraph on what was wrong or missing and why it mattered. No solution yet.
+2. **Solution** — high-level description of the approach. What changed conceptually, not mechanically.
+3. **Changes** — grouped by package/service. Each group explains what changed and why, not just what the diff says. Aim for "diff in English."
+4. **Implementation notes** — any section worth calling out specifically: ack semantics, migration strategy, tradeoffs made, non-obvious decisions. Only include if there's something a reviewer would otherwise have to dig for.
+5. **Related docs** — link any ADRs, design docs, or wiki pages that were created, updated, or are integral to understanding the change. Omit if none exist.
+6. **Test plan** — checklist of what to verify. Include automated tests that were added and any manual checks worth calling out post-deploy (e.g. metrics to watch).
+
+Keep titles under 70 characters. Don't pad sections — a missing section is better than a section with nothing real to say.
+
 ## Process
 
 - **Test after every change.** Build, lint, and run relevant tests before calling it done.
