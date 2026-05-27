@@ -29,6 +29,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Be surgical in existing codebases.** Don't rename files, variables, or restructure unless that's the task. Respect surrounding code.
 - **Match existing patterns.** Before writing code, look at similar files in the project for conventions.
 - **DRY — rule of 3.** If the same logic appears in 3 places, extract it.
+- **Prefer readability over micro-optimization.** Favor expressive collection methods (flatMap, reduce, etc.) over raw loops when the performance difference is negligible relative to I/O or other dominant costs.
 
 ## Process
 
