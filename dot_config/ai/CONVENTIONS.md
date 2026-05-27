@@ -33,7 +33,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 
 ## Tooling
 
-- **Use app/service-local scripts before reaching for the core package directly.** When a service's `package.json` defines scripts wrapping a tool (e.g. `rushx puff` for the driver service), use those instead of invoking the core package CLI from its own directory. The local script has the app name and defaults already baked in.
+- **Prefer project-local scripts over invoking tools directly.** When a project defines scripts that wrap a tool (e.g. in `package.json`, `Makefile`, `justfile`), use those instead of calling the underlying CLI directly. Local scripts have project-specific flags, paths, and defaults already baked in — reaching past them risks missing that context.
 
 ## Process
 
