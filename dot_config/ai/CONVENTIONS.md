@@ -43,7 +43,7 @@ PR bodies follow this structure — omit a section only if it genuinely doesn't 
 2. **Solution** — high-level description of the approach. What changed conceptually, not mechanically.
 3. **Changes** — grouped by package/service. Each group explains what changed and why, not just what the diff says. Aim for "diff in English."
 4. **Implementation notes** — any section worth calling out specifically: ack semantics, migration strategy, tradeoffs made, non-obvious decisions. Only include if there's something a reviewer would otherwise have to dig for.
-5. **Related docs** — link any ADRs, design docs, or wiki pages that were created, updated, or are integral to understanding the change. Omit if none exist.
+5. **Related docs** — always include this section when any ADRs, design docs, or wiki pages were created, updated, or are integral to understanding the change. Link them and note briefly why they're relevant.
 6. **Test plan** — checklist of what to verify. Include automated tests that were added and any manual checks worth calling out post-deploy (e.g. metrics to watch).
 
 Keep titles under 70 characters. Don't pad sections — a missing section is better than a section with nothing real to say.
