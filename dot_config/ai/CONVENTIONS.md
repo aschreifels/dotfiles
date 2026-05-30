@@ -57,10 +57,9 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 
 ## Ash Resources (Elixir / CVC)
 
-- **Split attributes and actions into Spark DSL fragments.** For any non-trivial Ash resource, use `Spark.Dsl.Fragment` to extract `attributes` and `actions` into their own modules (`Fragments.Attributes`, `Fragments.Actions`). The core resource file keeps `postgres`, `code_interface`, `policies`, and the fragment composition list — it reads as a manifest, not a catch-all.
-- **Small resources may stay as one file.** The fragment pattern is for resources large enough that a single file becomes a general catch-all. A simple resource with a handful of attributes and one or two actions can stay flat.
-- **Policies stay in the core resource file** unless the policy set is unusually large. They are short, read well inline, and benefit from being co-located with the `code_interface` and `authorizers` declaration.
-- **Behaviour goes in discrete modules.** Changes (`Ash.Resource.Change`), validations, preparations, and utilities always live in their own modules regardless of resource size. The resource file only declares which modules to use, never implements them inline.
+- **Fragment by stanza length, not stanza type.** Use `Spark.Dsl.Fragment` when a stanza (attributes, actions, policies, etc.) grows long enough that it would be uncomfortable as a single function — that's the signal to move it to its own module. If the whole resource including every stanza is succinct, keep it as one file. There is no hard rule that attributes or actions must always be extracted.
+- **The core resource file is the manifest.** It declares `use Ash.Resource`, data layer, authorizers, `postgres`, `code_interface`, and whichever stanzas are short enough to live inline. Fragment modules are listed in the `fragments:` option.
+- **Behaviour always lives in discrete modules** regardless of resource size. Changes (`Ash.Resource.Change`), validations, preparations, and utilities are never implemented inline in the resource — the resource only declares which modules to apply.
 
 ## Meta
 
