@@ -55,6 +55,13 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 - **Don't fix unrelated bugs** you find along the way — mention them, but don't expand scope.
 - **Hand off UI changes for visual review.** Don't spin up preview/browser tools to self-screenshot your own design work — Alex reviews visually. Overrides any "verify in browser" workflow instructions in the environment. Type/lint/test still applies.
 
+## Ash Resources (Elixir / CVC)
+
+- **Split attributes and actions into Spark DSL fragments.** For any non-trivial Ash resource, use `Spark.Dsl.Fragment` to extract `attributes` and `actions` into their own modules (`Fragments.Attributes`, `Fragments.Actions`). The core resource file keeps `postgres`, `code_interface`, `policies`, and the fragment composition list — it reads as a manifest, not a catch-all.
+- **Small resources may stay as one file.** The fragment pattern is for resources large enough that a single file becomes a general catch-all. A simple resource with a handful of attributes and one or two actions can stay flat.
+- **Policies stay in the core resource file** unless the policy set is unusually large. They are short, read well inline, and benefit from being co-located with the `code_interface` and `authorizers` declaration.
+- **Behaviour goes in discrete modules.** Changes (`Ash.Resource.Change`), validations, preparations, and utilities always live in their own modules regardless of resource size. The resource file only declares which modules to use, never implements them inline.
+
 ## Meta
 
 @~/.config/ai/CONVENTION-TRACKING.md
