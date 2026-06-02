@@ -55,6 +55,12 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 - **Don't fix unrelated bugs** you find along the way — mention them, but don't expand scope.
 - **Hand off UI changes for visual review.** Don't spin up preview/browser tools to self-screenshot your own design work — Alex reviews visually. Overrides any "verify in browser" workflow instructions in the environment. Type/lint/test still applies.
 
+## Ash Resources (Elixir / CVC)
+
+- **Fragment by stanza length, not stanza type.** Use `Spark.Dsl.Fragment` when a stanza (attributes, actions, policies, etc.) grows long enough that it would be uncomfortable as a single function — that's the signal to move it to its own module. If the whole resource including every stanza is succinct, keep it as one file. There is no hard rule that attributes or actions must always be extracted.
+- **The core resource file is the manifest.** It declares `use Ash.Resource`, data layer, authorizers, `postgres`, `code_interface`, and whichever stanzas are short enough to live inline. Fragment modules are listed in the `fragments:` option.
+- **Behaviour always lives in discrete modules** regardless of resource size. Changes (`Ash.Resource.Change`), validations, preparations, and utilities are never implemented inline in the resource — the resource only declares which modules to apply.
+
 ## Meta
 
 @~/.config/ai/CONVENTION-TRACKING.md
