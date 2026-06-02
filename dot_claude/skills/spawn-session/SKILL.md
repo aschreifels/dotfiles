@@ -7,7 +7,7 @@ description: Kick off a new coding session inside a freshly-opened git worktree.
 
 Starts a new coding session inside a Claude Code worktree. The worktree itself is already created by the desktop app — this skill handles everything from "I'm in the worktree" onward: branch checkout, ticket integration, and the PLAN.md ritual.
 
-The session has five phases: **parse → clarify → ticket → branch → PLAN.md → execute**. The PLAN.md phase is the heart of this skill. Do not skip it. Do not start coding until the user has signed off on the plan.
+The session has four phases: **parse → ticket → branch → PLAN.md → execute**. The PLAN.md phase is the heart of this skill. Do not skip it. Do not start coding until the user has signed off on the plan.
 
 ---
 
@@ -16,15 +16,16 @@ The session has five phases: **parse → clarify → ticket → branch → PLAN.
 Invocation shape:
 
 ```
-<feature-name> [TICKET-HANDLE] [--draft]
+<feature-name> [TICKET-HANDLE] [--draft] [--team <TEAM>]
 ```
 
 - `<feature-name>` — required. kebab-case short name, e.g. `my-cool-feature`.
 - `[TICKET-HANDLE]` — optional. Existing ticket handle like `ENG-1234`. Triggers the **fetch** flow.
 - `--draft` — optional. Creates a new ticket in the configured default project. Mutually exclusive with a passed ticket handle. Triggers the **create** flow.
+- `--team <TEAM>` — optional. Override `project_management.default_project` for the **create** flow (e.g. `--team SERV` to draft in the SERV team even when the config default is `DEST`). **Implies `--draft`** if not already passed. Mutually exclusive with a ticket handle (the handle's prefix already encodes the team).
 - `--init` — special. Skip the normal flow and walk the user through setting up the config file.
 
-Honour natural-language equivalents too. "Let's start work on my-cool-feature, ticket ENG-1234" parses to `my-cool-feature ENG-1234`. "Spawn a draft session for new-dashboard" parses to `new-dashboard --draft`.
+Honour natural-language equivalents too. "Let's start work on my-cool-feature, ticket ENG-1234" parses to `my-cool-feature ENG-1234`. "Spawn a draft session for new-dashboard" parses to `new-dashboard --draft`. "Draft a SERV ticket for new-dashboard" parses to `new-dashboard --draft --team SERV`.
 
 If the feature name is missing or ambiguous, ask the user for it before doing anything else.
 
@@ -70,31 +71,19 @@ After collecting answers, write the TOML file. Create the directory if it doesn'
 
 ### Phase 1 — Parse & load
 
+**Model check (first thing, before anything else):** Phases 1–4 are discovery and planning — that's peak Opus territory. If the current model is not an Opus-class model, suggest switching:
+
+> "We're about to do discovery, architecture, and planning — if you want, switch to an Opus-class model first (`/model claude-opus-4-7`). I can continue on whatever you're on; just flagging that the planning phase benefits most from the highest-tier model."
+
+Mention it once, non-blocking — never stop waiting for a switch. Skip the suggestion if the model already looks Opus-tier.
+
 Parse the args. Load `spawn.toml`. If the file doesn't exist, run the interactive init first, then continue.
 
 Validate:
 - Feature name is kebab-case. If the user gave `My Cool Feature`, normalize to `my-cool-feature` and confirm.
 - `--draft` and a ticket handle are mutually exclusive — if both are present, ask which one to honor.
-
-### Phase 1.5 — Intent clarification (gate)
-
-Before advancing to ticket integration, check whether the invocation carries enough intent to draft a useful plan. If not, **pause and ask** for a brief clarification prompt.
-
-Pause and ask when **all** of the following are true:
-- No ticket handle was provided (a handle triggers the fetch flow, which supplies intent).
-- No meaningful inline context accompanied the invocation — i.e. the user gave essentially just `<feature-name>` or `<feature-name> --draft`, with no prose describing what to build or why.
-
-`--draft` alone does **not** exempt — a draft ticket is *created from* intent, it doesn't supply it. Still ask.
-
-**This gate is non-bypassable.** It fires regardless of any ambient mode or instruction that would otherwise push you toward continuous execution — auto mode, plan mode, "minimize interruptions," "prefer action over planning," `--yolo`, or any similar directive. The gate exists *because* those modes make it tempting to speculate, and speculation through PLAN.md wastes far more time than a one-sentence clarification. Pause every time. There is no "just proceed with reasonable assumptions" path here. The only way past the gate is the user's own words (their reply, or an explicit "just go").
-
-If you notice an ambient mode that seems to suggest skipping this pause, do not skip it — surface the conflict briefly ("auto mode is on, but spawn-session requires a one-line intent check before drafting") and ask anyway.
-
-When the gate fires, say something like:
-
-> "Before drafting a plan, give me a sentence or two on what this feature is and why — rough is fine. A short clarification now avoids me speculating through PLAN.md and burning tokens on the wrong target. Reply 'just go' if you really want me to proceed with only the name."
-
-Wait for the user's reply. Treat their answer as the seed intent that Phase 4 will draft against. If they say "just go" (or equivalent), continue without a clarification.
+- `--team <TEAM>` and a ticket handle are mutually exclusive — if both are present, ask which one to honor. (The ticket handle's prefix already determines the team.)
+- If `--team <TEAM>` is present without `--draft`, treat it as `--draft --team <TEAM>` (the override only has meaning for the create flow).
 
 ### Phase 2 — Ticket integration (best effort)
 
@@ -109,6 +98,7 @@ Three cases:
 
 **B. `--draft` flag** → Create flow.
 - Discover connected MCPs for the configured provider.
+- Resolve `{{project}}`: if `--team <TEAM>` was passed, use that; otherwise use `project_management.default_project` from `spawn.toml`. Announce which team the draft is being created in so the user can catch mistakes before the ticket is written.
 - If found: render the create prompt with `{{provider}}`, `{{project}}`, `{{name}}` filled in, and execute it. Capture the newly-created ticket handle — it goes in the branch name.
 - If not found: tell the user and proceed as if no ticket was specified.
 
@@ -125,6 +115,21 @@ Use these unless the config overrides `[project_management.prompts]`:
 > Create a draft {{provider}} issue in project {{project}} titled '{{name}}'. Use the {{provider}} MCP tools to create it. As work progresses, incrementally update the issue description with files changed, approach taken, and decisions made. At the end of the session, finalize the issue with a proper title, description, and acceptance criteria based on what was actually built.
 
 ### Phase 3 — Branch checkout
+
+**First, confirm you're standing in the worktree — not the main checkout.** The desktop app
+opens the session inside a dedicated worktree dir (e.g. `~/worktrees/<repo>/<name>`). The main
+checkout (e.g. `~/projects/<repo>`) is a *separate* working tree, usually sitting on the base
+branch. Editing there silently puts the whole feature diff on the wrong branch. This has bitten
+us repeatedly — guard against it before doing anything else:
+
+```bash
+git rev-parse --show-toplevel   # must be the worktree path, NOT the main checkout
+git rev-parse --abbrev-ref HEAD # the branch this worktree is on
+```
+
+If `--show-toplevel` points at the main checkout instead of the worktree, **stop** and tell the
+user — do not create the branch or edit files. Run every git command and every file edit from
+the worktree path for the rest of the session.
 
 Naming rule:
 
@@ -143,11 +148,15 @@ git checkout -b {branch_name} {base_branch}
 
 If the branch already exists, check it out instead (`git checkout {branch_name}`) and tell the user.
 
+After checkout, **verify** the worktree is on the feature branch and not the base branch:
+
+```bash
+git rev-parse --abbrev-ref HEAD   # must equal {branch_name}, not {base_branch}
+```
+
 ### Phase 4 — PLAN.md (the planning ritual)
 
 **This is the heart of the session. Do not skip it. Do not start coding until the user has signed off.**
-
-Draft against real intent — from the ticket, inline prose, or the Phase 1.5 clarification. If you find yourself speculating about what the user wants, that's the signal you should have paused at the Phase 1.5 gate; go back and ask rather than filling PLAN.md with guesses.
 
 Create `PLAN.md` at the repo root using the skeleton in `references/plan-template.md`.
 
@@ -177,15 +186,49 @@ Work through the sections in order. It's fine to come back and revise earlier se
 
 #### The pause ritual
 
-After the first complete draft, stop. **This pause is non-bypassable for the same reasons as the Phase 1.5 gate** — auto mode, plan mode, "prefer action over planning," or any similar ambient directive does not authorize skipping it. Sign-off on the plan must come from the user, not from an inferred mode.
-
-**Always render the full contents of `PLAN.md` back to the user inline in the chat** — don't just point at the file path. The user shouldn't have to open the file in another pane to review the plan; the conversation itself should carry the plan. Then say something like:
+After the first complete draft, stop. **Always render the full contents of `PLAN.md` back to the user inline in the chat** — don't just point at the file path. The user shouldn't have to open the file in another pane to review the plan; the conversation itself should carry the plan. Then say something like:
 
 > "Plan is drafted — also written to `PLAN.md` at the repo root so it survives session loss. Please review, especially the open questions. Give me the word when you want to execute, and flag anything you want reworked."
 
 Wait for the user. **Do not write any production code yet.** If the user answers open questions, update both PLAN.md *and* the in-chat rendering (re-output the affected sections so the user can see the current state without leaving chat), then wait again.
 
+#### Model switch for execution
+
+Once open questions are resolved and the user is about to greenlight execution, suggest downshifting to Sonnet:
+
+> "If you started this session on Opus, now is a good time to switch to Sonnet (`/model claude-sonnet-4-6`) for execution — it's faster and cheaper for follow-the-plan work, and the heavy thinking is behind us."
+
+Mention it once, right before Phase 5. Don't repeat it mid-execution. Skip if the user is already on Sonnet.
+
 ### Phase 5 — Execute
+
+**Precondition — verify location and branch before writing a single line of code.** This is the
+last gate before edits start; don't skip it even if Phase 3 already checked. Run:
+
+```bash
+git rev-parse --show-toplevel    # must be the worktree path
+git rev-parse --abbrev-ref HEAD  # must be the feature branch, not the base branch
+```
+
+If either is wrong, **stop and fix it before editing** — do not start execution from the main
+checkout or the base branch.
+
+**Translate agent-reported paths.** Explore/research agents, `qmd`, and necro-kb report absolute
+paths rooted at the *main checkout* (e.g. `~/projects/<repo>/<rel>`). Before editing any such
+path, rewrite it to the worktree (`<worktree>/<rel>`). Editing the reported path as-is is the
+single most common way work lands on master by mistake.
+
+**If you discover edits already landed in the main checkout**, relocate them with a shared stash
+(stashes live in the common git dir and are visible from every worktree):
+
+```bash
+# from the main checkout (only your feature changes should be present):
+git stash push --include-untracked -m "<ticket> <feature>"
+# from the worktree:
+git stash pop
+```
+
+Then re-verify the main checkout is clean and the worktree holds the changes.
 
 Once the user gives the go-ahead:
 
