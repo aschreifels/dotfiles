@@ -48,6 +48,12 @@ PR bodies follow this structure — omit a section only if it genuinely doesn't 
 
 Keep titles under 70 characters. Don't pad sections — a missing section is better than a section with nothing real to say.
 
+### Responding to review comments
+
+- **Don't reply on a review thread when applying a suggestion as-is.** Just make the change. A reply is almost never needed for accepting a suggestion.
+- **Do reply** when (a) I ask you to explain why we declined a suggestion, or (b) we applied a *different* form of the suggestion than what was proposed (note what we did instead and why).
+- Never post replies/comments to GitHub without explicit confirmation regardless.
+
 ## Process
 
 - **Test after every change.** Build, lint, and run relevant tests before calling it done.
