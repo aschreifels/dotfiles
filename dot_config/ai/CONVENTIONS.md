@@ -50,8 +50,9 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 
 ### Responding to review comments
 
-- **Don't reply on a review thread when applying a suggestion as-is.** Just make the change. A reply is almost never needed for accepting a suggestion.
-- **Do reply** when (a) I ask you to explain why we declined a suggestion, or (b) we applied a *different* form of the suggestion than what was proposed (note what we did instead and why).
+- **Default: don't reply on review threads** — not when applying a suggestion as-is, and not when declining one either. Making the change (or not) is the action; a thread reply is separate and usually unnecessary.
+- **The trigger for a reply is an explicit ask from me** — e.g. "reply explaining why we declined that." The decline/accept distinction is not itself the trigger; my request is.
+- **One self-standing exception:** if we applied a *different* form of the suggestion than proposed, a brief note of what we did instead and why is warranted.
 - Never post replies/comments to GitHub without explicit confirmation regardless.
 
 ## Process
