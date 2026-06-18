@@ -55,9 +55,14 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 - **One self-standing exception:** if we applied a *different* form of the suggestion than proposed, a brief note of what we did instead and why is warranted.
 - Never post replies/comments to GitHub without explicit confirmation regardless.
 
+## Project Structure
+
+- **Keep tests in a discrete `tests/` folder, not co-located next to modules.** Co-locating `*.test.ts` beside source bloats the module folders and muddies the file tree. Put them under a dedicated tests directory (e.g. `src/tests/`).
+
 ## Process
 
 - **Test after every change.** Build, lint, and run relevant tests before calling it done.
+- **After a large edit session that creates net-new files, print the resulting file tree** (a `tree`/`find` of the created/affected files). The diff view obscures file structure, so a tree makes the new layout legible at a glance.
 - **Write a failing test before fixing a bug** when test infrastructure exists.
 - **Don't fix unrelated bugs** you find along the way — mention them, but don't expand scope.
 - **Hand off UI changes for visual review.** Don't spin up preview/browser tools to self-screenshot your own design work — Alex reviews visually. Overrides any "verify in browser" workflow instructions in the environment. Type/lint/test still applies.
