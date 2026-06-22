@@ -83,7 +83,42 @@ Config override: set `[project_management.prompts] finalize = "..."` in `spawn.t
 
 Placeholders: `{{provider}}`, `{{ticket}}`, `{{branch}}`.
 
-### Phase 4 — Preview shutdown
+### Phase 4 — Voice capture (lightweight)
+
+Harvest voice signal from this session into the corpus — the raw pool that the
+`voice-distill` skill later compresses into `~/.config/ai/VOICE.md`. This is
+**capture, not distillation**: append a few high-signal observations and stop.
+Never rewrite `VOICE.md` from here.
+
+Append one dated entry to `~/.config/ai/voice/corpus.md` (create the dir/file if
+missing). Capture only what genuinely helps write prose *as* Alex:
+
+- **Corrections (highest signal):** if Alex edited prose you wrote "in his
+  voice" this session, record the before → after and what it reveals.
+- **Vocabulary / framing he reached for** — distinctive words, phrasings, or
+  framings from his own messages.
+- **Structure / tone moves** worth reinforcing.
+
+Rules:
+- **Distill, don't dump.** A few bullets, never a transcript. Capture his words
+  and instincts — *not* his loose chat style (typos, run-ons, interjections);
+  those are not his artifact voice.
+- **Skip silently when there's no real signal** (short or purely mechanical
+  session). An empty capture beats noise.
+- **Append only.** Add one `## YYYY-MM-DD · <ticket/feature>` entry; do not touch
+  `VOICE.md` or prune the corpus — that's `voice-distill`'s job.
+- The corpus is local working state; this skill does **not** commit it.
+
+Entry shape:
+
+```markdown
+## 2026-06-22 · DEST-610 (marketplace domain pkg)
+- vocab: "the go-to", "batteries included", "clean lines of separation"
+- framing: leads with the north-star / how it'll be adopted, mechanics after
+- correction: I wrote "provides a domain layer" → he'd cast it as "is the go-to for …"
+```
+
+### Phase 5 — Preview shutdown
 
 Before touching the worktree, tear down any running preview environment so no dev server is left pointing at a directory that's about to disappear.
 
@@ -91,9 +126,9 @@ Before touching the worktree, tear down any running preview environment so no de
 2. For any preview whose working directory is inside `<worktree_path>` (or whose identity matches the worktree/feature), call `mcp__Claude_Preview__preview_stop` on it.
 3. If the Preview MCP isn't connected or returns no matching previews, skip silently — don't error.
 
-Do this before Phase 5 regardless of whether you personally started the preview this session; a prior turn may have.
+Do this before Phase 6 regardless of whether you personally started the preview this session; a prior turn may have.
 
-### Phase 5 — Worktree removal
+### Phase 6 — Worktree removal
 
 If the current working directory is inside the worktree being removed, `cd` to the main repo first — you can't remove the worktree you're sitting in.
 
@@ -104,7 +139,7 @@ git worktree remove <worktree_path>
 
 If `git worktree remove` refuses (e.g. still has uncommitted state despite Phase 2), surface the error to the user and let them decide. Don't silently add `--force` to this command — Phase 2 is the right place for that override.
 
-### Phase 6 — Branch deletion (optional)
+### Phase 7 — Branch deletion (optional)
 
 Only if `--delete-branch` / `-D` was passed, OR the user explicitly confirmed in conversation.
 
@@ -114,16 +149,17 @@ git branch -D <branch_name>
 
 Use `-D` (force) rather than `-d` — the branch may not be merged yet, and the user asked to delete it.
 
-### Phase 7 — Report
+### Phase 8 — Report
 
 Summarize in a tight block:
 
 - **Worktree:** removed at `<path>`
 - **Branch:** deleted / kept (`<branch>`)
 - **Ticket:** finalized / comment posted on `<TICKET>` / skipped (reason)
+- **Voice:** captured N note(s) to the corpus / skipped (no signal)
 - **Warnings:** anything left behind (e.g. stashed changes, unpushed commits user chose to leave, etc.)
 
-Keep it to 4–6 lines. No celebratory emoji spam.
+Keep it tight (5–7 lines). No celebratory emoji spam.
 
 ---
 
