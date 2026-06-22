@@ -58,6 +58,7 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 ## Project Structure
 
 - **Keep tests in a discrete `tests/` folder, not co-located next to modules.** Co-locating `*.test.ts` beside source bloats the module folders and muddies the file tree. Put them under a dedicated tests directory (e.g. `src/tests/`).
+- **Group tests by kind in subfolders — `tests/unit/` and `tests/integration/`.** The directory should signal the test type so someone exploring the repo knows where to look; don't make them hunt for an `.integration` infix in the filename. Select test runs by folder (e.g. `--testPathPattern='tests/unit/'`), not by a filename suffix.
 
 ## Process
 
