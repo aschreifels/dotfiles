@@ -17,10 +17,12 @@ skill is the *compression* pass the user runs on their own cadence.
 
 - `~/.config/ai/VOICE.md` — the curated, always-loaded reference. **Hard cap:
   ~150 lines.** The output of this skill.
-- `~/.config/ai/voice/corpus.md` — raw pending signal (dated entries). Input.
-  Not loaded into context; safe to grow between distills.
-- `~/.config/ai/voice/archive.md` — folded entries are moved here, dated, for
-  traceability. Created on first distill.
+- `~/.config/ai/voice/corpus/` — raw pending signal, **one log per day**
+  (`<YYYY-MM-DD>.md`), fed by `wrap-session`. Input. Not loaded into context;
+  the active corpus only holds days not yet distilled.
+- `~/.config/ai/voice/archive/` — folded day-logs are **moved** here after a
+  distill (same filenames), for traceability. Prune it by hand whenever it gets
+  large.
 
 ## Arguments
 
@@ -36,9 +38,9 @@ skill is the *compression* pass the user runs on their own cadence.
 
 ### 1. Gather
 
-Read `VOICE.md` (current), `voice/corpus.md` (all pending entries), and any
-samples passed as args. If the corpus is empty **and** no samples were given,
-tell the user there's nothing to distill and stop.
+Read `VOICE.md` (current), every day-log in `voice/corpus/` (`*.md`), and any
+samples passed as args. If `voice/corpus/` has no logs **and** no samples were
+given, tell the user there's nothing to distill and stop.
 
 ### 2. Distill (the core move)
 
@@ -68,9 +70,10 @@ approval; let them edit the proposal. (Alex reads diffs — respect that.)
 
 On approval:
 1. Write the revised `VOICE.md`.
-2. Append the folded corpus entries to `~/.config/ai/voice/archive.md` under a
-   `## Distilled YYYY-MM-DD` heading, then reset `corpus.md` to just its header
-   comment — leaving a clean reference space for the next capture cycle.
+2. **Move** the folded day-logs from `voice/corpus/` to `voice/archive/` (keep
+   the same `<YYYY-MM-DD>.md` filenames; create `archive/` if missing) — leaving
+   the active corpus empty for the next capture cycle. Don't delete them; the
+   archive is the long record you prune by hand.
 3. Sync the curated doc: `chezmoi add ~/.config/ai/VOICE.md`. Do **not** commit
    the corpus or archive (local working state).
 

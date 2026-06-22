@@ -90,8 +90,10 @@ Harvest voice signal from this session into the corpus — the raw pool that the
 **capture, not distillation**: append a few high-signal observations and stop.
 Never rewrite `VOICE.md` from here.
 
-Append one dated entry to `~/.config/ai/voice/corpus.md` (create the dir/file if
-missing). Capture only what genuinely helps write prose *as* Alex:
+Append to **today's** capture log — `~/.config/ai/voice/corpus/<YYYY-MM-DD>.md`
+(create the `corpus/` dir and the day's file if missing). Multiple sessions in
+one day append to the same dated log. Capture only what genuinely helps write
+prose *as* Alex:
 
 - **Corrections (highest signal):** if Alex edited prose you wrote "in his
   voice" this session, record the before → after and what it reveals.
@@ -105,14 +107,15 @@ Rules:
   those are not his artifact voice.
 - **Skip silently when there's no real signal** (short or purely mechanical
   session). An empty capture beats noise.
-- **Append only.** Add one `## YYYY-MM-DD · <ticket/feature>` entry; do not touch
-  `VOICE.md` or prune the corpus — that's `voice-distill`'s job.
+- **Append only.** Add one `## <ticket/feature>` section to today's log (the date
+  is the filename); do not touch `VOICE.md`, other days' logs, or prune anything
+  — that's `voice-distill`'s job.
 - The corpus is local working state; this skill does **not** commit it.
 
-Entry shape:
+Entry shape (inside `corpus/2026-06-22.md`):
 
 ```markdown
-## 2026-06-22 · DEST-610 (marketplace domain pkg)
+## DEST-610 (marketplace domain pkg)
 - vocab: "the go-to", "batteries included", "clean lines of separation"
 - framing: leads with the north-star / how it'll be adopted, mechanics after
 - correction: I wrote "provides a domain layer" → he'd cast it as "is the go-to for …"
