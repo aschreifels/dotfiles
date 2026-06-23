@@ -74,6 +74,10 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 - **The core resource file is the manifest.** It declares `use Ash.Resource`, data layer, authorizers, `postgres`, `code_interface`, and whichever stanzas are short enough to live inline. Fragment modules are listed in the `fragments:` option.
 - **Behaviour always lives in discrete modules** regardless of resource size. Changes (`Ash.Resource.Change`), validations, preparations, and utilities are never implemented inline in the resource — the resource only declares which modules to apply.
 
+## Knowledge Base (necro-kb)
+
+- **Write directly to `~/projects/necro-kb`, never use drop files in project repos.** Don't create `.claude/necro-kb/` directories inside any project — committed or untracked, they're noise. Write KB articles directly to the right place in the KB (`wiki/`, `decisions/`, `patterns/`, etc.) in the same session.
+
 ## Meta
 
 @~/.config/ai/CONVENTION-TRACKING.md
