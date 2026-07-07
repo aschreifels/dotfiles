@@ -54,6 +54,17 @@ heavier actor/scenario framework only when the behavior genuinely crosses servic
 boundaries (workers, event buses, webhooks). Heaviness is usually a bootstrapping
 cost — the per-session spec habit is exactly what amortizes it.
 
+**Framework vs. runtime — record both, couple specs only to the first.** The
+*framework* is what specs are written in (harness, actor SDK) and what CI must be able
+to execute — spec code targets it and takes endpoints/connection info as config, never
+hardcoded. The *runtime* is where a session actually runs the suites: if the project
+has a per-worktree stack tool (isolated per-branch DB/services, one-shot command
+execution inside the stack), use it — it removes cross-session contention from the
+serialized-ops lane, and a fast DB-reset-from-template primitive gives prod-shaped
+specs (no transaction rollback) a clean-slate determinism story. The substrate record
+names both halves; a spec that only runs under the local runtime and not in CI still
+fails the CI-runnable requirement.
+
 ## Who writes the specs
 
 - **Default:** a dedicated Sonnet spec agent with an orchestrator-written brief.
