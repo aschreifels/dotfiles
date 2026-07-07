@@ -7,7 +7,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Never force push.** No `--force`, `--force-with-lease`, or `-f`. If a push is rejected, inform me rather than forcing.
 - **Never amend pushed commits.** Create new commits instead.
 - **Don't revert changes** unless they caused errors or I explicitly ask.
-- **Don't push to remote** unless I explicitly ask. Always confirm before any `git push`. Incremental local commits capturing discrete bodies of progress are welcome.
+- **Don't push to remote** unless I explicitly ask. Always confirm before any `git push`. Incremental local commits capturing discrete bodies of progress are welcome. **Exception:** when the branch already has an open PR, pushing a **master-merge** (integrating latest master into the feature branch) is pre-authorized — do it automatically after the merge is clean and verified. This exception is only for master-merge updates; pushing new feature commits still needs an explicit ask.
 - **Merge, never rebase.** When pulling or integrating master into a feature branch, always use `git merge` — never `git pull --rebase` or `git rebase`. Rebasing rewrites history and can silently drop or duplicate commits.
 
 ## Code Changes
