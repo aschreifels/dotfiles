@@ -17,6 +17,8 @@ Parse the arguments as:
 - First positional arg: feature name (kebab-case, required)
 - Second positional arg (optional): ticket handle, e.g. `ENG-1234`
 - `--draft`: create a new draft ticket in the default project
+- `--team <TEAM>`: override the default project for `--draft` (e.g. `--team SERV`). Implies `--draft`. Mutually exclusive with a passed ticket handle.
+- `--solo`: execute chunks inline instead of delegating to sub-agents
 - `--init`: run interactive config setup instead of the normal flow
 
-Then follow the skill's flow end-to-end. Do not skip the PLAN.md phase. Do not start coding until I've signed off on the plan.
+Then follow the skill's flow end-to-end. Do not skip the dossier phase. Do not start coding until I've signed off on the plan, and land the contracts (chunk 0) before any fan-out.

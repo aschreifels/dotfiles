@@ -5,7 +5,7 @@ description: Close down and clean up a coding session started by the spawn-sessi
 
 # wrap-session
 
-Bookend to `spawn-session`. Tears down a coding session: safety checks → ticket finalization → worktree removal → optional branch deletion.
+Bookend to `spawn-session`. Tears down a coding session: safety checks → ticket finalization → dossier harvest → worktree removal → optional branch deletion.
 
 Shares the same config file as `spawn-session`: `$XDG_CONFIG_HOME/ai/spawn.toml` (fall back to `~/.config/ai/spawn.toml`). See `spawn-session` for the full config schema. If the config file is missing, tell the user to run `/spawn-session --init` first — don't initialize it from the wrap flow.
 
@@ -66,7 +66,7 @@ Skip this phase entirely unless all three are true:
 - `project_management.provider` is configured and not `none`
 - The corresponding MCP is connected and available
 
-Read `PLAN.md` from the worktree (if still present) for context on what was planned vs. built. Also skim recent git log for the branch.
+Read the `.plan/` dossier from the worktree (if still present) for context on what was planned vs. built — `handoff/wrap.md` and `MANIFEST.md` first, then the current plan version (legacy sessions may have a single `PLAN.md` instead). Also skim recent git log for the branch.
 
 Use the finalize prompt (below, or config override) to update the ticket. The prompt handles two sub-cases via the model's own judgment:
 
@@ -83,7 +83,30 @@ Config override: set `[project_management.prompts] finalize = "..."` in `spawn.t
 
 Placeholders: `{{provider}}`, `{{ticket}}`, `{{branch}}`.
 
-### Phase 4 — Voice capture (lightweight)
+### Phase 4 — Dossier harvest
+
+The `.plan/` dossier dies with the worktree — this phase decides what outlives it.
+Skip silently if the worktree has no dossier (legacy `PLAN.md`-only sessions included:
+their insights move to the ticket in Phase 3 and that's enough).
+
+1. Walk `.plan/adr/` and read each doc's `Promotion candidate` field, plus any
+   promotion notes in `handoff/wrap.md`.
+2. Sort each ADR (and any contract doc whose reasoning generalizes):
+   - **`kb-pattern` / `kb-decision`** → write directly into the knowledge base at
+     `~/projects/necro-kb` (`patterns/` or `decisions/`), generalized — strip
+     session-specific paths, keep the Shape pseudo-code and the reasoning.
+     Project-agnostic phrasing wherever the pattern isn't inherently tied to the repo.
+     Never use drop files.
+   - **`project-agent-docs`** → these should have graduated into the repo's agent docs
+     *via the PR during the session*. If one didn't, flag it to the user as a follow-up
+     — don't commit new files to the repo from the wrap flow.
+   - **`session-only`** → dies with the worktree, as designed.
+3. Show the user the harvest manifest (what's going to the KB, one line each) before
+   writing. They arbitrate; default to their call over the ADR's own hint.
+4. Keep it honest: harvest only docs with real reuse value. An empty harvest is a fine
+   outcome — don't fabricate KB entries to make the phase look productive.
+
+### Phase 5 — Voice capture (lightweight)
 
 Harvest voice signal from this session into the corpus — the raw pool that the
 `voice-distill` skill later compresses into `~/.config/ai/VOICE.md`. This is
@@ -121,7 +144,7 @@ Entry shape (inside `corpus/2026-06-22.md`):
 - correction: I wrote "provides a domain layer" → he'd cast it as "is the go-to for …"
 ```
 
-### Phase 5 — Preview shutdown
+### Phase 6 — Preview shutdown
 
 Before touching the worktree, tear down any running preview environment so no dev server is left pointing at a directory that's about to disappear.
 
@@ -129,9 +152,9 @@ Before touching the worktree, tear down any running preview environment so no de
 2. For any preview whose working directory is inside `<worktree_path>` (or whose identity matches the worktree/feature), call `mcp__Claude_Preview__preview_stop` on it.
 3. If the Preview MCP isn't connected or returns no matching previews, skip silently — don't error.
 
-Do this before Phase 6 regardless of whether you personally started the preview this session; a prior turn may have.
+Do this before Phase 7 regardless of whether you personally started the preview this session; a prior turn may have.
 
-### Phase 6 — Worktree removal
+### Phase 7 — Worktree removal
 
 If the current working directory is inside the worktree being removed, `cd` to the main repo first — you can't remove the worktree you're sitting in.
 
@@ -142,7 +165,7 @@ git worktree remove <worktree_path>
 
 If `git worktree remove` refuses (e.g. still has uncommitted state despite Phase 2), surface the error to the user and let them decide. Don't silently add `--force` to this command — Phase 2 is the right place for that override.
 
-### Phase 7 — Branch deletion (optional)
+### Phase 8 — Branch deletion (optional)
 
 Only if `--delete-branch` / `-D` was passed, OR the user explicitly confirmed in conversation.
 
@@ -152,13 +175,14 @@ git branch -D <branch_name>
 
 Use `-D` (force) rather than `-d` — the branch may not be merged yet, and the user asked to delete it.
 
-### Phase 8 — Report
+### Phase 9 — Report
 
 Summarize in a tight block:
 
 - **Worktree:** removed at `<path>`
 - **Branch:** deleted / kept (`<branch>`)
 - **Ticket:** finalized / comment posted on `<TICKET>` / skipped (reason)
+- **Harvest:** N doc(s) promoted to the KB / flagged as follow-ups / skipped (nothing to promote)
 - **Voice:** captured N note(s) to the corpus / skipped (no signal)
 - **Warnings:** anything left behind (e.g. stashed changes, unpushed commits user chose to leave, etc.)
 
@@ -168,7 +192,7 @@ Keep it tight (5–7 lines). No celebratory emoji spam.
 
 ## Notes on intent
 
-- **PLAN.md dies with the worktree.** That's the design. Its purpose was the session; its insights move to the ticket via Phase 3. If a user wants PLAN.md preserved, they should copy it out before running this skill.
+- **The dossier dies with the worktree — except what the harvest promotes.** That's the design: the `.plan/` folder's purpose was the session; its insights move to the ticket via Phase 3 and to the KB / agent docs via Phase 4. Anything not promoted is gone on purpose. (Legacy `PLAN.md` sessions: same rule, ticket-only.)
 - **No PR creation.** That happens during the session (via GitHub MCP, `gh`, or manually) or is the user's responsibility. This skill is strictly closure.
 - **Fail safe, not fast.** Unlike the legacy cwt tool, this skill does not parallelize removal. The safety-first tradeoff matters more than saving a second on teardown.
 
