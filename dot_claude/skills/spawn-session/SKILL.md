@@ -46,6 +46,7 @@ Schema:
 branch_prefix = "as"        # short prefix at the head of every branch
 base_branch = "main"        # branch to create feature branches from
 worktree_dir = "~/worktrees" # optional; parent for skill-created worktrees: {worktree_dir}/{repo}/{name}
+dossier_dir = "~/dossiers"   # optional; real home of dossiers (symlinked into worktrees as _plan)
 
 [project_management]
 provider = "linear"         # linear | notion | jira | none
@@ -225,7 +226,18 @@ git rev-parse --abbrev-ref HEAD   # must equal {branch_name}, not {base_branch}
 
 **This is the heart of the session. Do not skip it. Do not start coding until the user has signed off.**
 
-Create the `_plan/` dossier at the repo root using the layout and templates in `references/dossier.md`:
+Create the dossier. **Its real home is outside the repo, symlinked in as `_plan`** — so
+dossier tooling (the Obsidian vault, Bases, CLI scans) sees only dossiers, never the
+millions of files inside worktrees:
+
+```bash
+DOSSIER="${dossier_dir:-$HOME/dossiers}/{repo-name}/{worktree-dir-name}"
+mkdir -p "$DOSSIER"
+ln -sfn "$DOSSIER" "$(git rev-parse --show-toplevel)/_plan"
+```
+
+Everything below addresses it as `_plan/` from the worktree root — the symlink makes
+the central location transparent. Layout and templates in `references/dossier.md`:
 
 ```
 _plan/
@@ -239,13 +251,13 @@ _plan/
 
 #### Rules
 
-1. **The dossier is never committed.** Exclude `_plan/` via the repo's local exclude file — do **not** edit `.gitignore`. Resolve the path with `git rev-parse --git-path info/exclude` (worktrees have a `.git` *file*, and the worktree's own `info/exclude` is **not** consulted — exclusions must live in the main repo's `.git/info/exclude`). Append idempotently:
+1. **The dossier is never committed.** Exclude the `_plan` symlink via the repo's local exclude file — do **not** edit `.gitignore`. The pattern is `_plan` **without a trailing slash** (trailing-slash patterns match only real directories; `_plan` is a symlink). Resolve the path with `git rev-parse --git-path info/exclude` (worktrees have a `.git` *file*, and the worktree's own `info/exclude` is **not** consulted — exclusions must live in the main repo's `.git/info/exclude`). Append idempotently:
    ```bash
    EXCLUDE="$(git rev-parse --git-path info/exclude)"
    mkdir -p "$(dirname "$EXCLUDE")"; touch "$EXCLUDE"
-   grep -qxF "_plan/" "$EXCLUDE" || echo "_plan/" >> "$EXCLUDE"
+   grep -qxF "_plan" "$EXCLUDE" || echo "_plan" >> "$EXCLUDE"
    ```
-   Verify with `git status` — nothing under `_plan/` should appear as untracked.
+   Verify with `git status` — `_plan` should not appear as untracked.
 2. **Plans are versioned, never edited.** Each revision is a new file — `plans/001-initial.md`, `plans/002-post-review.md`. The user reviews plan *diffs as documents*; editing a plan in place destroys that. `MANIFEST.md` always points at the current version.
 3. **MANIFEST.md is the living index.** It carries the live chunk map (with status), links to the current plan / ADRs / contracts, and the open-question count. Keep it in lockstep with the TodoWrite tool — chunk statuses and todos mirror each other, so the dossier alone is enough to resume a lost session.
 4. **Patterns and architecture go in `adr/`, not in the plan.** Each significant pattern or structural decision is a discrete ADR-style doc with a **Shape** section — pseudo-code that dictates signatures, file layout, and naming. These are the docs sub-agents are held to, and the candidates the wrap-session harvest promotes to the KB or the project's agent docs. Cite existing repo patterns by example-file path; write new ones as pseudo-code and harden them with the user.

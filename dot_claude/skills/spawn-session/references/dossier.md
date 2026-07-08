@@ -4,7 +4,12 @@ Layout and templates for the session dossier. The dossier replaces the old singl
 PLAN.md: it is the canonical planning artifact, the review surface the user opens in
 their own tools, and the raw material the wrap-session harvest promotes into the KB.
 
-Never committed — excluded via the main repo's `info/exclude` (see SKILL.md Phase 4).
+**Physical layout:** the dossier's real home is `${dossier_dir:-~/dossiers}/<repo>/<worktree-name>/`,
+symlinked into the worktree as `_plan` (see SKILL.md Phase 4). Everything addresses it
+as `_plan/` from the worktree root; the central home exists so dossier tooling — an
+Obsidian vault rooted at the dossier dir, Bases, CLI scans — indexes only dossiers,
+never worktree code. Never committed — the `_plan` symlink is excluded via the main
+repo's `info/exclude`.
 
 ```
 _plan/

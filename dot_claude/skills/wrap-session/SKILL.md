@@ -173,6 +173,8 @@ git worktree remove <worktree_path>
 
 If `git worktree remove` refuses (e.g. still has uncommitted state despite Phase 2), surface the error to the user and let them decide. Don't silently add `--force` to this command — Phase 2 is the right place for that override.
 
+**Then remove the dossier's central home** (the harvest in Phase 4 already extracted anything worth keeping): `rm -rf "${dossier_dir:-$HOME/dossiers}/<repo>/<worktree-dir-name>"`. Skip if it doesn't exist (legacy sessions kept the dossier inside the worktree, where it just died with it).
+
 ### Phase 8 — Branch deletion (optional)
 
 Only if `--delete-branch` / `-D` was passed, OR the user explicitly confirmed in conversation.

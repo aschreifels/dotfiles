@@ -23,9 +23,11 @@ recognizing the value in the config.
 
 ## obsidian
 
-Assumes the user's vault is rooted at the **worktrees parent dir** (`worktree_dir`,
-e.g. `~/worktrees`), so worktree code and dossiers are both vault-internal. Relevant
-plugins: Bases (core), Embed Code File, Advanced URI, Shell commands, Code Styler.
+Assumes the user's vault is rooted at the **dossier dir** (`dossier_dir`, e.g.
+`~/dossiers`) — dossiers only; worktree code is deliberately *outside* the vault
+(indexing worktrees means millions of node_modules files; measured 95% of vault
+markdown was dependency READMEs). Relevant plugins: Bases (core), Advanced URI,
+Shell commands, Code Styler.
 
 ### Properties (Bases)
 
@@ -53,22 +55,25 @@ blockquotes everywhere else:
 
 Use the folded form (`[!x]-`) for anything long — the reader unfolds on demand.
 
-### Inline code embeds
+### Inline code excerpts
 
-In addition to (never instead of) every canonical code-ref link, emit an
-[Embed Code File](https://github.com/almariah/embed-code-file) block so the
-referenced code renders inline and live-updates as executors change it:
+Code lives outside the vault, so refs can't be followed or live-embedded from
+Obsidian. In addition to (never instead of) every canonical code-ref link, quote the
+referenced lines as a **static excerpt** — a plain fenced code block, written at
+dossier-write time, directly under the Refs line:
 
 ````markdown
-```embed-typescript
-PATH: "vault://{repo}/{worktree-name}/{repo-rel-path}"
-LINES: "{start}-{end}"
-TITLE: "{repo-rel-path}:{line}"
+**Refs:** [users.ts:42](../../packages/api/src/users.ts:42)
+```typescript
+// packages/api/src/users.ts:40-46
+{the referenced lines plus a little surrounding context}
 ```
 ````
 
-`PATH` is vault-relative from the worktrees parent. Pull a few lines of surrounding
-context, not just the single line. Language suffix matches the file type.
+Excerpts are snapshots — if the review round changes the code under a ref, refresh
+the excerpt when folding answers in. For click-through to the live file, the Shell
+commands plugin can open an absolute path in the user's editor; that's user-side
+vault config, not dossier content.
 
 ### Diagrams
 
