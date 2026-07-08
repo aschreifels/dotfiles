@@ -109,9 +109,11 @@ if $interactive; then
     --placeholder 'Pick an open brief…' \
     --indicator '→' --height 12)" || { unfunction _kb_fm 2>/dev/null; return 0 }
 
-  local path="${choice##*  ·  }"
+  # NB: never name this `path` — zsh ties that variable to $PATH, and
+  # assigning it clobbers command lookup for the rest of the function.
+  local article="${choice##*  ·  }"
   unfunction _kb_fm 2>/dev/null
-  glow -p "${path/#\~/$HOME}"
+  glow -p "${article/#\~/$HOME}"
   return $?
 fi
 
