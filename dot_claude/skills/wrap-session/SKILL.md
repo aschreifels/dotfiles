@@ -66,7 +66,7 @@ Skip this phase entirely unless all three are true:
 - `project_management.provider` is configured and not `none`
 - The corresponding MCP is connected and available
 
-Read the `.plan/` dossier from the worktree (if still present) for context on what was planned vs. built — `handoff/wrap.md` and `MANIFEST.md` first, then the current plan version (legacy sessions may have a single `PLAN.md` instead). Also skim recent git log for the branch.
+Read the `_plan/` dossier from the worktree (if still present) for context on what was planned vs. built — `handoff/wrap.md` and `MANIFEST.md` first, then the current plan version (legacy sessions may have the dossier at `.plan/` or a single `PLAN.md` instead — check those too). Also skim recent git log for the branch.
 
 Use the finalize prompt (below, or config override) to update the ticket. The prompt handles two sub-cases via the model's own judgment:
 
@@ -85,11 +85,11 @@ Placeholders: `{{provider}}`, `{{ticket}}`, `{{branch}}`.
 
 ### Phase 4 — Dossier harvest
 
-The `.plan/` dossier dies with the worktree — this phase decides what outlives it.
+The `_plan/` dossier dies with the worktree — this phase decides what outlives it.
 Skip silently if the worktree has no dossier (legacy `PLAN.md`-only sessions included:
 their insights move to the ticket in Phase 3 and that's enough).
 
-1. Walk `.plan/adr/` and read each doc's `Promotion candidate` field, plus any
+1. Walk `_plan/adr/` and read each doc's `Promotion candidate` field, plus any
    promotion notes in `handoff/wrap.md`.
 2. Sort each ADR (and any contract doc whose reasoning generalizes):
    - **`kb-pattern` / `kb-decision`** → write directly into the knowledge base at
@@ -199,7 +199,7 @@ Keep it tight (5–7 lines). No celebratory emoji spam.
 
 ## Notes on intent
 
-- **The dossier dies with the worktree — except what the harvest promotes.** That's the design: the `.plan/` folder's purpose was the session; its insights move to the ticket via Phase 3 and to the KB / agent docs via Phase 4. Anything not promoted is gone on purpose. (Legacy `PLAN.md` sessions: same rule, ticket-only.)
+- **The dossier dies with the worktree — except what the harvest promotes.** That's the design: the `_plan/` folder's purpose was the session; its insights move to the ticket via Phase 3 and to the KB / agent docs via Phase 4. Anything not promoted is gone on purpose. (Legacy `PLAN.md` sessions: same rule, ticket-only.)
 - **No PR creation.** That happens during the session (via GitHub MCP, `gh`, or manually) or is the user's responsibility. This skill is strictly closure.
 - **Fail safe, not fast.** Unlike the legacy cwt tool, this skill does not parallelize removal. The safety-first tradeoff matters more than saving a second on teardown.
 

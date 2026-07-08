@@ -88,7 +88,7 @@ migrations/commits, report format), plus:
 ## What to pin
 
 For each contract, the invariants to prove:
-- {worktree}/.plan/contracts/{seam}.md — Invariants section is your assertion list
+- {worktree}/_plan/contracts/{seam}.md — Invariants section is your assertion list
 - Happy path(s): {enumerate the prod-shaped flows, step by step}
 - {For bug sessions: the fixed path — generalize the repro test at
   {path-to-failing-test}}

@@ -50,8 +50,8 @@ neighboring chunks' files, schema, lockfiles}.
 ## Held to
 
 Read before writing code:
-- {worktree}/.plan/adr/{NNN}.md — follow its Shape exactly
-- {worktree}/.plan/contracts/{seam}.md — the types are already committed; code against them
+- {worktree}/_plan/adr/{NNN}.md — follow its Shape exactly
+- {worktree}/_plan/contracts/{seam}.md — the types are already committed; code against them
 
 ## Done-criteria
 
@@ -72,7 +72,7 @@ Run and pass before reporting:
 
 ## Report
 
-Write {worktree}/.plan/chunks/{NN}-report.md in the report format (below), and return
+Write {worktree}/_plan/chunks/{NN}-report.md in the report format (below), and return
 its content as your final message.
 ```
 

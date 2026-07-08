@@ -1,4 +1,4 @@
-# The .plan/ dossier
+# The _plan/ dossier
 
 Layout and templates for the session dossier. The dossier replaces the old single
 PLAN.md: it is the canonical planning artifact, the review surface the user opens in
@@ -7,7 +7,7 @@ their own tools, and the raw material the wrap-session harvest promotes into the
 Never committed — excluded via the main repo's `info/exclude` (see SKILL.md Phase 4).
 
 ```
-.plan/
+_plan/
   MANIFEST.md                 # living index — the ONLY file that gets edited in place
   plans/
     001-initial.md            # frozen snapshots — new file per revision, never edited

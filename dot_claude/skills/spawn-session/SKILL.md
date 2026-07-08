@@ -1,6 +1,6 @@
 ---
 name: spawn-session
-description: Kick off a new coding session inside a freshly-opened git worktree. Check out a correctly-named feature branch, optionally fetch context from a ticket (Linear/Notion/Jira via MCP) or create a draft ticket, then collaboratively build a plan dossier (.plan/) — versioned plans, ADR-style pattern docs, typed contracts — before writing any code. Execution runs in orchestrator mode: the session model plans, carves parallelizable chunks, and delegates them to Sonnet sub-agents, reviewing each changeset before it lands. Use this skill whenever the user runs /spawn or /start, or says anything like "let's start work on X", "spawn a session for X", "new feature X", "kick off [TICKET-123]", or otherwise signals they're beginning a fresh piece of work in a worktree. This is the canonical session-opening ritual — fire it aggressively at session starts, even when the user phrases it loosely. If the user says "--init" or the config file is missing, run the interactive setup flow instead.
+description: Kick off a new coding session inside a freshly-opened git worktree. Check out a correctly-named feature branch, optionally fetch context from a ticket (Linear/Notion/Jira via MCP) or create a draft ticket, then collaboratively build a plan dossier (_plan/) — versioned plans, ADR-style pattern docs, typed contracts — before writing any code. Execution runs in orchestrator mode: the session model plans, carves parallelizable chunks, and delegates them to Sonnet sub-agents, reviewing each changeset before it lands. Use this skill whenever the user runs /spawn or /start, or says anything like "let's start work on X", "spawn a session for X", "new feature X", "kick off [TICKET-123]", or otherwise signals they're beginning a fresh piece of work in a worktree. This is the canonical session-opening ritual — fire it aggressively at session starts, even when the user phrases it loosely. If the user says "--init" or the config file is missing, run the interactive setup flow instead.
 ---
 
 # spawn-session
@@ -56,7 +56,7 @@ default_project = "ENG"     # used when --draft creates a ticket
 # fetch = "..."
 # create = "..."
 
-# Optional — review tool launched at the pause ritual. {dossier} = absolute .plan/
+# Optional — review tool launched at the pause ritual. {dossier} = absolute _plan/
 # path, {plan} = absolute path of the current plan snapshot. Examples:
 #   command = "zed {dossier}"                          # editor (code refs clickable)
 #   command = "open 'obsidian://open?path={plan}'"     # Obsidian (vault must contain the worktrees dir)
@@ -225,10 +225,10 @@ git rev-parse --abbrev-ref HEAD   # must equal {branch_name}, not {base_branch}
 
 **This is the heart of the session. Do not skip it. Do not start coding until the user has signed off.**
 
-Create the `.plan/` dossier at the repo root using the layout and templates in `references/dossier.md`:
+Create the `_plan/` dossier at the repo root using the layout and templates in `references/dossier.md`:
 
 ```
-.plan/
+_plan/
   MANIFEST.md      # the only living doc — session state, live chunk map, links
   plans/           # versioned plan snapshots — append-only, never edited in place
   adr/             # ADR-style pattern & architecture docs
@@ -239,13 +239,13 @@ Create the `.plan/` dossier at the repo root using the layout and templates in `
 
 #### Rules
 
-1. **The dossier is never committed.** Exclude `.plan/` via the repo's local exclude file — do **not** edit `.gitignore`. Resolve the path with `git rev-parse --git-path info/exclude` (worktrees have a `.git` *file*, and the worktree's own `info/exclude` is **not** consulted — exclusions must live in the main repo's `.git/info/exclude`). Append idempotently:
+1. **The dossier is never committed.** Exclude `_plan/` via the repo's local exclude file — do **not** edit `.gitignore`. Resolve the path with `git rev-parse --git-path info/exclude` (worktrees have a `.git` *file*, and the worktree's own `info/exclude` is **not** consulted — exclusions must live in the main repo's `.git/info/exclude`). Append idempotently:
    ```bash
    EXCLUDE="$(git rev-parse --git-path info/exclude)"
    mkdir -p "$(dirname "$EXCLUDE")"; touch "$EXCLUDE"
-   grep -qxF ".plan/" "$EXCLUDE" || echo ".plan/" >> "$EXCLUDE"
+   grep -qxF "_plan/" "$EXCLUDE" || echo "_plan/" >> "$EXCLUDE"
    ```
-   Verify with `git status` — nothing under `.plan/` should appear as untracked.
+   Verify with `git status` — nothing under `_plan/` should appear as untracked.
 2. **Plans are versioned, never edited.** Each revision is a new file — `plans/001-initial.md`, `plans/002-post-review.md`. The user reviews plan *diffs as documents*; editing a plan in place destroys that. `MANIFEST.md` always points at the current version.
 3. **MANIFEST.md is the living index.** It carries the live chunk map (with status), links to the current plan / ADRs / contracts, and the open-question count. Keep it in lockstep with the TodoWrite tool — chunk statuses and todos mirror each other, so the dossier alone is enough to resume a lost session.
 4. **Patterns and architecture go in `adr/`, not in the plan.** Each significant pattern or structural decision is a discrete ADR-style doc with a **Shape** section — pseudo-code that dictates signatures, file layout, and naming. These are the docs sub-agents are held to, and the candidates the wrap-session harvest promotes to the KB or the project's agent docs. Cite existing repo patterns by example-file path; write new ones as pseudo-code and harden them with the user.
@@ -277,7 +277,7 @@ tool opens itself; they shouldn't have to. Skip silently if the command fails.
 
 Then say something like:
 
-> "The dossier is drafted at `.plan/` — plan, ADRs, and contracts are ready for review in your editor of choice. Answer the open questions here or directly in the files (just tell me to re-read the dossier). Give me the word to start execution."
+> "The dossier is drafted at `_plan/` — plan, ADRs, and contracts are ready for review in your editor of choice. Answer the open questions here or directly in the files (just tell me to re-read the dossier). Give me the word to start execution."
 
 Wait for the user. **Do not write any production code yet.** When the user edits dossier files directly, re-read them, diff against what you wrote, and fold the deltas into a new plan version if they change scope. Answers to open questions get inlined per rule 5.
 
@@ -360,7 +360,7 @@ The orchestrator's own final gate — chunk-scoped verification doesn't catch se
 
 ## References
 
-- `references/dossier.md` — `.plan/` layout and templates (MANIFEST, plan snapshot, ADR, contract)
+- `references/dossier.md` — `_plan/` layout and templates (MANIFEST, plan snapshot, ADR, contract)
 - `references/chunk-protocol.md` — chunk map spec, brief/report templates, review loop, serialized-ops lane
 - `references/behavioral-specs.md` — behavioral pass definition, substrate rules, spec-agent brief
 - `assets/slash-command.md` — template to drop into `.claude/commands/spawn.md` for slash-command invocation
