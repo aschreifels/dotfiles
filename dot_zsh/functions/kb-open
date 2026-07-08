@@ -1,0 +1,107 @@
+# kb-open — list open work in the necro-kb knowledge base
+#
+# Scans the KB for articles whose frontmatter says `status: active` (the
+# convention for initiative/handoff briefs and in-flight research) and prints
+# them with title, type, and path. The frontmatter is the work queue; wrap
+# sessions flip briefs to `status: completed`, which drops them from this list.
+#
+# Usage:
+#   kb-open                  # everything open
+#   kb-open curri            # narrow by pattern (title/tags/content, case-insensitive)
+#   kb-open -p               # paths only (pipeable: kb-open -p | xargs bat)
+#
+# Environment:
+#   NECRO_KB    KB root (default: ~/projects/necro-kb — home-agnostic on purpose)
+
+local kb="${NECRO_KB:-$HOME/projects/necro-kb}"
+local filter=""
+local paths_only=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -p|--paths)
+      paths_only=true
+      shift
+      ;;
+    -h|--help)
+      echo "kb-open — list open work (status: active) in the necro-kb"
+      echo ""
+      echo "Usage:"
+      echo "  kb-open              everything open"
+      echo "  kb-open <pattern>    narrow by pattern (case-insensitive)"
+      echo "  kb-open -p           paths only (pipeable)"
+      echo ""
+      echo "Environment:"
+      echo "  NECRO_KB             KB root (default: ~/projects/necro-kb)"
+      return 0
+      ;;
+    -*)
+      echo "kb-open: unknown option '$1' (use --help)" >&2
+      return 1
+      ;;
+    *)
+      filter="${filter:+$filter }$1"
+      shift
+      ;;
+  esac
+done
+
+if [[ ! -d "$kb" ]]; then
+  echo "kb-open: KB not found at ${kb} (set NECRO_KB to override)" >&2
+  return 1
+fi
+
+if ! command -v rg >/dev/null; then
+  echo "kb-open: ripgrep (rg) is required" >&2
+  return 1
+fi
+
+# ── Collect active articles ──────────────────────────────────────
+local -a files
+files=(${(f)"$(command rg -l --sort path '^status:[[:space:]]*active' "$kb" \
+  --glob '*.md' --glob '!output/**' --glob '!raw/**' 2>/dev/null)"})
+
+# ── Optional narrowing filter ────────────────────────────────────
+if [[ -n "$filter" && ${#files} -gt 0 ]]; then
+  files=(${(f)"$(command rg -li "$filter" "${files[@]}" 2>/dev/null)"})
+fi
+
+if [[ ${#files} -eq 0 ]]; then
+  if [[ -n "$filter" ]]; then
+    echo "kb-open: nothing open matching '${filter}'"
+  else
+    echo "kb-open: nothing open — the KB work queue is clear ✓"
+  fi
+  return 0
+fi
+
+if $paths_only; then
+  print -l -- "${files[@]}"
+  return 0
+fi
+
+# ── Render ───────────────────────────────────────────────────────
+# _kb_fm <file> <key>: first frontmatter value for key, quotes stripped
+_kb_fm() {
+  awk -v key="$2" '
+    NR==1 && $0=="---" { fm=1; next }
+    fm && $0=="---"    { exit }
+    fm && index($0, key ":")==1 {
+      sub("^" key ":[[:space:]]*", ""); gsub(/^"|"$/, ""); print; exit
+    }
+  ' "$1"
+}
+
+local f title type domain updated
+for f in "${files[@]}"; do
+  title="$(_kb_fm "$f" title)"
+  type="$(_kb_fm "$f" type)"
+  domain="$(_kb_fm "$f" domain)"
+  updated="$(_kb_fm "$f" updated)"
+  print -P "%B%F{cyan}${type:-?}%f%b  ${title:-${${f:t}%.md}}  %F{8}(${domain:-?}, updated ${updated:-?})%f"
+  print -P "      %F{8}${f/#$HOME/~}%f"
+done
+
+unfunction _kb_fm 2>/dev/null
+
+print -P "\n%F{8}${#files} open — flip \`status:\` to \`completed\` (wrap-session does this) to clear.%f"
