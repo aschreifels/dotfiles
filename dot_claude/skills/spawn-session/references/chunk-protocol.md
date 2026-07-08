@@ -2,8 +2,10 @@
 
 The full contract between the orchestrator (session model) and executors (Sonnet
 sub-agents, spawned via the Agent tool with `model: sonnet`, in the background).
-Applies equally when executing inline (`--solo` / below the delegation threshold) —
-the brief just becomes the orchestrator's own spec.
+Delegation is unconditional — even a single-chunk map goes to a Sonnet executor;
+there is no size threshold. The protocol applies equally on the rare inline paths
+(`--solo`, chunk 0, absorbing an escalated chunk) — the brief just becomes the
+orchestrator's own spec.
 
 ## Chunk map spec
 
