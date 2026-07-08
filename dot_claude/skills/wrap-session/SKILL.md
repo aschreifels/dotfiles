@@ -103,7 +103,14 @@ their insights move to the ticket in Phase 3 and that's enough).
    - **`session-only`** → dies with the worktree, as designed.
 3. Show the user the harvest manifest (what's going to the KB, one line each) before
    writing. They arbitrate; default to their call over the ADR's own hint.
-4. Keep it honest: harvest only docs with real reuse value. An empty harvest is a fine
+4. **Close out any KB handoff doc that spawned this session.** If the session was
+   kicked off from a KB article (an initiative/handoff brief with `status: active`),
+   flip it to `status: completed` (or note remaining scope if partial), and add a
+   short Outcome section linking to whatever the session produced — the successor
+   articles, the PR, the agent-docs page. Don't delete it; the resolved brief is the
+   future answer to "why did we do this". Eventual pruning belongs to the KB's own
+   consolidation pipeline.
+5. Keep it honest: harvest only docs with real reuse value. An empty harvest is a fine
    outcome — don't fabricate KB entries to make the phase look productive.
 
 ### Phase 5 — Voice capture (lightweight)
