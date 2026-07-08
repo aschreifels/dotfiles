@@ -16,6 +16,10 @@ packages:
       - jq
       - yq
 
+      # Charm CLI stack (pretty scripts & TUIs — see CONVENTIONS.md → Tooling)
+      - gum        # interaction: choose/filter/confirm/spin/style
+      - glow       # markdown rendering in the terminal
+
       # Git
       - git-delta
       - lazygit
