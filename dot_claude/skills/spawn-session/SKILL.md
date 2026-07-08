@@ -144,9 +144,13 @@ checkbox — **create the worktree yourself; never edit in the main checkout**:
    WT="${worktree_dir:-$HOME/worktrees}/{repo-name}/{TICKET}_{feature-name}"
    git worktree add "$WT" -b {branch_name} {base_branch}
    ```
-   This matches the desktop app's own location (`~/worktrees/<repo>/…`) and names the
-   directory after the initiative — **`git worktree list` reads as a work log**, and
-   the branch is born canonical (no rename needed in this flow).
+   No ticket (none passed, none drafted, or no provider configured) → the directory is
+   just `{feature-name}` and the branch is `{branch_prefix}/{feature-name}` per the
+   naming table — the prefix belongs in branch names only, never in directory names
+   (`as/` as a folder would nest). This matches the desktop app's own location
+   (`~/worktrees/<repo>/…`) and names the directory after the initiative —
+   **`git worktree list` reads as a work log**, and the branch is born canonical (no
+   rename needed in this flow).
 3. Switch the session into it with the `EnterWorktree` tool using `path: $WT` (it
    enters any worktree registered in `git worktree list`). If the harness rejects a
    path outside `.claude/worktrees/`, fall back to `EnterWorktree` with
