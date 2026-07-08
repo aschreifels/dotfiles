@@ -145,13 +145,29 @@ Naming rule:
 
 Examples: `as/ENG-1234_my-cool-feature`, `as/my-cool-feature`.
 
-Run:
+**The desktop app usually opens the worktree already on an auto-generated placeholder
+branch** (e.g. `as/some-feature-ish-name-b0af7f`). That name is never canonical —
+**rename it in place, every time, without asking**:
+
+```bash
+git branch -m {branch_name}
+```
+
+Renaming the current branch is safe in a worktree — the desktop's worktree mapping is
+by *path*, not branch name. Do this after Phase 2 so a drafted ticket's handle makes it
+into the name. Only two exceptions: the current branch already matches the canonical
+name (nothing to do), or it has an upstream (`git rev-parse --abbrev-ref @{u}`
+succeeds — already pushed / PR open; renaming would orphan the remote, so surface to
+the user instead). "Keeping the placeholder and noting it as a deviation" is not an
+option.
+
+If the worktree is sitting on the **base branch** instead, create the feature branch:
 
 ```bash
 git checkout -b {branch_name} {base_branch}
 ```
 
-If the branch already exists, check it out instead (`git checkout {branch_name}`) and tell the user.
+If the canonical branch already exists, check it out instead (`git checkout {branch_name}`) and tell the user.
 
 After checkout, **verify** the worktree is on the feature branch and not the base branch:
 
