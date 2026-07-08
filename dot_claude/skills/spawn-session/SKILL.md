@@ -297,12 +297,20 @@ Wait for the user. **Do not write any production code yet.** When the user edits
 
 **Invariant: every session lands its contracts before fan-out — even solo sessions, even single-chunk sessions.** The seams are where the user shapes the code; they get hardened with the user in Phase 4 and turned into real committed code here, so executors code against actual types rather than promises, and the type-checker — not the reviewer — enforces the shape.
 
-Chunk 0 is executed **inline by the orchestrator** (never delegated) and contains:
+Chunk 0 is **delegated like any other chunk** — a Sonnet executor with the contract
+docs as its brief: land the hardened types *verbatim*. What makes it special is not
+who types it but its scheduling and review:
 
-- Shared types, interfaces, and the seams from `contracts/`.
-- Schema changes: Prisma schema, GraphQL SDL, event payload types.
-- Codegen runs for the above, plus any dependency additions (lockfile ops).
-- A commit, once it type-checks: contracts land as the first commit on the branch.
+- **It is a hard barrier.** No other chunk is briefed or spawned until chunk 0 is
+  accepted and committed — every executor codes against real committed types.
+- **Contents:** shared types, interfaces, and the seams from `contracts/`; schema
+  changes (Prisma schema, GraphQL SDL, event payload types). The executor reports
+  codegen/dependency needs; the orchestrator runs them at accept (serialized-ops
+  lane, standard protocol) and commits — contracts land as the first commit.
+- **Strictest review of the session:** the diff is compared against `contracts/`
+  near-verbatim. Any conflict the executor hits with existing types is a *question
+  in its report*, never an improvisation — contract amendment stays with the
+  orchestrator (and the user, when it's a judgment call).
 
 After chunk 0, every executor's `typecheck` done-criteria doubles as contract enforcement — a chunk that violates its seam fails its own verification. If a mid-flight chunk discovers it needs a contract change, that's a *paused* chunk, not a licence to improvise: the orchestrator amends the contract (with the user if it's a judgment call), lands it, then resumes the chunk. Frequent mid-flight contract changes are a signal chunk 0 was under-designed — say so in the wrap handoff.
 
@@ -337,7 +345,7 @@ git stash pop
 
 Full protocol — brief template, report contract, review loop, serialized-ops lane — lives in `references/chunk-protocol.md`. The shape:
 
-1. **Delegation is unconditional — there is no size threshold.** Every executor chunk goes to a Sonnet sub-agent, *including a chunk map of one*: the orchestrator's tokens are the expensive ones, executors are faster and cheaper, and delegating keeps the orchestrator's context clean for review. Do not weigh chunk count or diff size, and do not record a "session mode" — there is no mode decision to make. The orchestrator writes production code in exactly three cases: chunk 0 (contracts), absorbing a chunk after the revision cap / escalation, and `--solo`. On those inline paths the protocol still applies (briefs-as-specs, per-chunk commits, verification); the brief just becomes your own spec.
+1. **Delegation is unconditional — there is no size threshold.** Every executor chunk goes to a Sonnet sub-agent, *including a chunk map of one*: the orchestrator's tokens are the expensive ones, executors are faster and cheaper, and delegating keeps the orchestrator's context clean for review. Do not weigh chunk count or diff size, and do not record a "session mode" — there is no mode decision to make. The orchestrator writes production code in exactly two cases: absorbing a chunk after the revision cap / escalation, and `--solo`. On those inline paths the protocol still applies (briefs-as-specs, per-chunk commits, verification); the brief just becomes your own spec.
 2. **Brief** each chunk (`chunks/NN-brief.md`): objective, explicit file list, *don't-touch* boundaries, pointers to the relevant ADRs/contracts (point, don't inline — executors can Read the dossier), done-criteria commands, the report format, and the standing constraints (no codegen, no lockfile ops, no migrations, no commits, work only in the worktree path given).
 3. **Spawn** executors with the Agent tool, `model: sonnet`, in the background. Spawn a parallel group only when the chunks' file sets are disjoint; otherwise run in dependency order. Relay a one-line status to the user as each chunk lands.
 4. **Review the diff, not the synopsis.** When an executor reports, read its report (`chunks/NN-report.md`), then review the actual `git diff` for the chunk's files against the ADR shapes and contracts. Executors over-claim; the diff doesn't.
@@ -346,7 +354,7 @@ Full protocol — brief template, report contract, review loop, serialized-ops l
 7. **Deviations are review input.** Anything the executor did beyond its brief is either adopted (fold into the ADR/contract so later chunks inherit it) or reverted — never silently absorbed.
 8. **Scope changes update the dossier first**, then the chunk map, then execution. New risks or questions go to `MANIFEST.md` and get raised with the user.
 
-The orchestrator keeps for itself: chunk 0, cross-cutting changes, gnarly debugging, anything touching more files than a brief can bound, and the final integration pass.
+The orchestrator keeps for itself: cross-cutting changes, gnarly debugging, anything touching more files than a brief can bound, contract amendments, and the final integration pass.
 
 If this session was started with `--draft`, update the draft ticket's description incrementally as chunks land, and finalize it at the end (per the create prompt).
 

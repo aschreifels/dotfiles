@@ -4,8 +4,10 @@ The full contract between the orchestrator (session model) and executors (Sonnet
 sub-agents, spawned via the Agent tool with `model: sonnet`, in the background).
 Delegation is unconditional — even a single-chunk map goes to a Sonnet executor;
 there is no size threshold. The protocol applies equally on the rare inline paths
-(`--solo`, chunk 0, absorbing an escalated chunk) — the brief just becomes the
-orchestrator's own spec.
+(`--solo`, absorbing an escalated chunk) — the brief just becomes the
+orchestrator's own spec. Chunk 0 (contracts) is delegated like any chunk; its
+distinction is barrier scheduling and near-verbatim review against `contracts/`,
+not ownership.
 
 ## Chunk map spec
 
@@ -13,7 +15,7 @@ Every chunk row carries:
 
 | Field | Meaning |
 |---|---|
-| `#` | Chunk id. `0` is always contracts (orchestrator-inline, lands first). |
+| `#` | Chunk id. `0` is always contracts — a hard barrier: accepted + committed before anything else is briefed. |
 | Files (scope) | **Explicit** file list or tight glob. This is the write-boundary. |
 | Depends on | Chunk ids that must be *accepted and committed* first. |
 | Parallel group | Chunks in the same group may run concurrently — only if their file sets are provably disjoint **and** none touch shared generated files (codegen output, lockfiles). When in doubt, sequence. |

@@ -104,7 +104,7 @@ updated: {YYYY-MM-DD}
 
 | # | Chunk | Files (scope) | Depends on | Parallel group | Refs | Status |
 |---|-------|---------------|------------|----------------|------|--------|
-| 0 | Contracts | ... | — | — (orchestrator, inline) | contracts/* | pending |
+| 0 | Contracts | ... | — | — (barrier: blocks all) | contracts/* | pending |
 | 1 | ... | ... | 0 | A | adr/001, contracts/x | pending |
 
 Status values: `pending → briefed → executing → in-review → revising → accepted (commit <sha>)`,
@@ -243,5 +243,6 @@ semantics, error contracts). These feed the behavioral specs in Phase 7.
 
 ## Gen implications
 
-Codegen this triggers (Prisma, GraphQL, etc.) — chunk 0 runs it; executors never do.
+Codegen this triggers (Prisma, GraphQL, etc.) — the orchestrator runs it at chunk-0
+accept (serialized-ops lane); executors never run gen themselves.
 ```
