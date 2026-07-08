@@ -1,13 +1,17 @@
-# kb-open — list open work in the necro-kb knowledge base
+# kb-open — list & read open work in the necro-kb knowledge base
 #
 # Scans the KB for articles whose frontmatter says `status: active` (the
-# convention for initiative/handoff briefs and in-flight research) and prints
-# them with title, type, and path. The frontmatter is the work queue; wrap
-# sessions flip briefs to `status: completed`, which drops them from this list.
+# convention for initiative/handoff briefs and in-flight research). The
+# frontmatter is the work queue; wrap sessions flip briefs to
+# `status: completed`, which drops them from this list.
+#
+# Built on the Charm stack per CONVENTIONS.md → Tooling: yq for frontmatter,
+# gum for interaction, glow for reading.
 #
 # Usage:
-#   kb-open                  # everything open
-#   kb-open curri            # narrow by pattern (title/tags/content, case-insensitive)
+#   kb-open                  # list everything open
+#   kb-open curri            # narrow by pattern (case-insensitive, content-wide)
+#   kb-open -i               # fuzzy-pick a brief and read it in glow
 #   kb-open -p               # paths only (pipeable: kb-open -p | xargs bat)
 #
 # Environment:
@@ -16,19 +20,19 @@
 local kb="${NECRO_KB:-$HOME/projects/necro-kb}"
 local filter=""
 local paths_only=false
+local interactive=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -p|--paths)
-      paths_only=true
-      shift
-      ;;
+    -p|--paths)       paths_only=true;  shift ;;
+    -i|--interactive) interactive=true; shift ;;
     -h|--help)
-      echo "kb-open — list open work (status: active) in the necro-kb"
+      echo "kb-open — list & read open work (status: active) in the necro-kb"
       echo ""
       echo "Usage:"
-      echo "  kb-open              everything open"
+      echo "  kb-open              list everything open"
       echo "  kb-open <pattern>    narrow by pattern (case-insensitive)"
+      echo "  kb-open -i           fuzzy-pick a brief and read it in glow"
       echo "  kb-open -p           paths only (pipeable)"
       echo ""
       echo "Environment:"
@@ -51,10 +55,13 @@ if [[ ! -d "$kb" ]]; then
   return 1
 fi
 
-if ! command -v rg >/dev/null; then
-  echo "kb-open: ripgrep (rg) is required" >&2
-  return 1
-fi
+local dep
+for dep in rg yq; do
+  if ! command -v "$dep" >/dev/null; then
+    echo "kb-open: ${dep} is required (brew install ${dep})" >&2
+    return 1
+  fi
+done
 
 # ── Collect active articles ──────────────────────────────────────
 local -a files
@@ -80,28 +87,45 @@ if $paths_only; then
   return 0
 fi
 
-# ── Render ───────────────────────────────────────────────────────
-# _kb_fm <file> <key>: first frontmatter value for key, quotes stripped
-_kb_fm() {
-  awk -v key="$2" '
-    NR==1 && $0=="---" { fm=1; next }
-    fm && $0=="---"    { exit }
-    fm && index($0, key ":")==1 {
-      sub("^" key ":[[:space:]]*", ""); gsub(/^"|"$/, ""); print; exit
-    }
-  ' "$1"
-}
+# ── Frontmatter helper (yq does the parsing, no awk gymnastics) ──
+_kb_fm() { yq --front-matter=extract "$2 // \"\"" "$1" 2>/dev/null }
 
+# ── Interactive: fuzzy-pick with gum, read with glow ─────────────
+if $interactive; then
+  for dep in gum glow; do
+    if ! command -v "$dep" >/dev/null; then
+      echo "kb-open: ${dep} is required for -i (brew install ${dep})" >&2
+      return 1
+    fi
+  done
+
+  local f choice
+  local -a lines
+  for f in "${files[@]}"; do
+    lines+=("$(_kb_fm "$f" .title)  ·  ${f/#$HOME/~}")
+  done
+
+  choice="$(print -l -- "${lines[@]}" | gum filter \
+    --placeholder 'Pick an open brief…' \
+    --indicator '→' --height 12)" || { unfunction _kb_fm 2>/dev/null; return 0 }
+
+  local path="${choice##*  ·  }"
+  unfunction _kb_fm 2>/dev/null
+  glow -p "${path/#\~/$HOME}"
+  return $?
+fi
+
+# ── Static list ──────────────────────────────────────────────────
 local f title type domain updated
 for f in "${files[@]}"; do
-  title="$(_kb_fm "$f" title)"
-  type="$(_kb_fm "$f" type)"
-  domain="$(_kb_fm "$f" domain)"
-  updated="$(_kb_fm "$f" updated)"
+  title="$(_kb_fm "$f" .title)"
+  type="$(_kb_fm "$f" .type)"
+  domain="$(_kb_fm "$f" .domain)"
+  updated="$(_kb_fm "$f" .updated)"
   print -P "%B%F{cyan}${type:-?}%f%b  ${title:-${${f:t}%.md}}  %F{8}(${domain:-?}, updated ${updated:-?})%f"
   print -P "      %F{8}${f/#$HOME/~}%f"
 done
 
 unfunction _kb_fm 2>/dev/null
 
-print -P "\n%F{8}${#files} open — flip \`status:\` to \`completed\` (wrap-session does this) to clear.%f"
+print -P "\n%F{8}${#files} open · kb-open -i to read one · wrap-session flips status to clear.%f"
