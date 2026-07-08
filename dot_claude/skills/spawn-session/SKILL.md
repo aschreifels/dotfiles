@@ -132,9 +132,29 @@ git rev-parse --show-toplevel   # must be the worktree path, NOT the main checko
 git rev-parse --abbrev-ref HEAD # the branch this worktree is on
 ```
 
-If `--show-toplevel` points at the main checkout instead of the worktree, **stop** and tell the
-user — do not create the branch or edit files. Run every git command and every file edit from
-the worktree path for the rest of the session.
+If `--show-toplevel` points at the main checkout, the user skipped the app's worktree
+checkbox — **create the worktree yourself; never edit in the main checkout**:
+
+1. Make sure Phase 2 ran first, so a drafted/fetched ticket handle can go into the name
+   (the phase order already guarantees this).
+2. Call the `EnterWorktree` tool with `name: {TICKET}_{feature-name}` (no ticket →
+   `{feature-name}`). This creates the worktree + branch and switches the session into
+   it — **the directory name now matches the initiative**, which is the point: `git
+   worktree list` reads as a work log.
+3. Continue with the naming rule below — rename the EnterWorktree-created branch to
+   the canonical `{branch_prefix}/…` form (the rename-in-place rule).
+
+If the harness has no `EnterWorktree` tool, **stop** and tell the user — do not create
+the branch or edit files from the main checkout.
+
+**Never rename or move an app-created worktree directory** (checkbox flow). The desktop
+maps the session to the worktree by *path* — `git worktree move` under a live session
+breaks that mapping and the session's cwd. In that flow the *branch* is the canonical
+identity; `git worktree list` maps whimsical dir → canonical branch when you need to
+track down what happened where.
+
+Run every git command and every file edit from the worktree path for the rest of the
+session.
 
 Naming rule:
 
