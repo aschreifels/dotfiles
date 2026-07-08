@@ -36,6 +36,16 @@ Editing rules:
   pauses dependent chunks — never a drive-by edit).
 - The user may edit any dossier file directly from their own editor. When told to
   "re-read the dossier", diff against what you last wrote and fold the deltas in.
+- **Dossier-internal cross-references are always relative markdown links, never plain
+  text.** Every mention of another dossier doc — a plan's `Supersedes:` line, the chunk
+  map's Refs column (`[adr/001](adr/001-….md)`), MANIFEST's Documents section, a brief's
+  pointers — is a real relative link. Obsidian (and editors) resolve these into
+  backlinks and the graph for free; plain-text mentions produce nothing. Do **not** use
+  `[[wikilinks]]` in the dossier: every session has a `MANIFEST.md` and a
+  `001-initial.md`, so filename-based resolution is ambiguous across worktrees in a
+  shared vault — relative paths are unambiguous everywhere. (Exception: executor briefs
+  keep absolute worktree paths in their "Held to" section — executor correctness beats
+  graph aesthetics.)
 - **Code refs are clickable links, everywhere.** Any dossier doc that mentions code
   (open questions, ADR context, contract landing sites, chunk scopes) links it as
   `[<repo-rel-path>:<line>](<path relative to the doc>)` — e.g. from
@@ -122,7 +132,7 @@ integration runs) — so the session can be replayed mentally from this file alo
 ```markdown
 # Plan {NNN} — {feature-name}
 
-**Supersedes:** {NNN-1 or "none (initial)"}
+**Supersedes:** [{NNN-1}]({NNN-1 filename}) {or "none (initial)"}
 **What changed since last version:** {1–3 bullets; omit for 001}
 
 ## Summary of proposed changes
