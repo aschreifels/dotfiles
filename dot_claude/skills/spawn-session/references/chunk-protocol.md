@@ -105,6 +105,11 @@ if self-contained.}
 
 ## The review loop (orchestrator)
 
+Status transitions are part of the action, not bookkeeping after it: update the
+chunk's MANIFEST row (and TodoWrite) **as you brief, as you spawn, as you accept** —
+write-MANIFEST-first, every time. If the MANIFEST disagrees with reality, the
+protocol was violated even if the code is fine.
+
 Per chunk, on report:
 
 1. **Read the report, then review the actual diff** — `git diff` scoped to the chunk's

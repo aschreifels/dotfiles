@@ -239,6 +239,8 @@ git rev-parse --abbrev-ref HEAD  # must be the feature branch, not the base bran
 
 If either is wrong, **stop and fix it before editing**. Include the worktree path *explicitly* in every executor brief — sub-agents inherit the same footguns.
 
+**Second precondition — the dossier records the transition before the work happens.** The moment the user signs off, flip `MANIFEST.md`'s State to executing — *before* writing any brief or code. From then on, every status change is **write-MANIFEST-first**: a chunk isn't briefed until its row says `briefed`, isn't running until it says `executing`, isn't done until it says `accepted (commit <sha>)`. Never batch status updates for later — a stale MANIFEST lies to the user mid-session and defeats the dossier's resume-after-loss purpose.
+
 **Translate agent-reported paths.** Explore/research agents, `qmd`, and necro-kb report absolute
 paths rooted at the *main checkout* (e.g. `~/projects/<repo>/<rel>`). Before editing any such
 path — and before putting it in a brief — rewrite it to the worktree (`<worktree>/<rel>`).
