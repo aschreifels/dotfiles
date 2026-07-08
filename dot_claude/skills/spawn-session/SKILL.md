@@ -63,9 +63,9 @@ default_project = "ENG"     # used when --draft creates a ticket
 #   command = "glow -p {plan}"                         # terminal read-only
 # [review]
 # command = "zed {dossier}"
-# flavor = "obsidian"   # optional; dossier code refs additionally emit inline
-#                       # Embed Code File blocks, questions render as callouts,
-#                       # and chat digests deep-link questions (references/dossier.md)
+# flavor = "obsidian"   # optional; adapts dossier rendering to the review tool —
+#                       # callouts, inline code embeds, mermaid, transclusion, chat
+#                       # deep links. Guidelines per flavor: references/flavors.md
 # vault = "worktrees"   # optional; Obsidian vault name for Advanced URI deep links
 ```
 
@@ -361,6 +361,7 @@ The orchestrator's own final gate — chunk-scoped verification doesn't catch se
 ## References
 
 - `references/dossier.md` — `_plan/` layout and templates (MANIFEST, plan snapshot, ADR, contract)
+- `references/flavors.md` — review-tool flavor guidelines (`obsidian`: callouts, embeds, mermaid, transclusion, deep links)
 - `references/chunk-protocol.md` — chunk map spec, brief/report templates, review loop, serialized-ops lane
 - `references/behavioral-specs.md` — behavioral pass definition, substrate rules, spec-agent brief
 - `assets/slash-command.md` — template to drop into `.claude/commands/spawn.md` for slash-command invocation

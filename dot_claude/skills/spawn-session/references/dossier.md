@@ -53,20 +53,16 @@ Editing rules:
   visible text stays repo-relative for readability; the target resolves from the
   doc's own location so it's click-to-jump in Zed/editors and in chat. Never a bare
   "in the delivery resolver" — name the file and line.
-  **Obsidian flavor (`[review] flavor = "obsidian"` in spawn.toml):** in addition to
-  (never instead of) each link, emit an [Embed Code File](https://github.com/almariah/embed-code-file)
-  block rendering the referenced lines inline — a fenced `embed-<language>` block
-  with `PATH:` vault-relative from the worktrees parent dir (the assumed vault root,
-  e.g. `vault://curri/DEST-616_feature/packages/api/src/users.ts`) and `LINES:`
-  covering the ref plus a few lines of context. The embed reads the file at render
-  time, so it tracks the code as it changes. Links remain the canonical ref; embeds
-  are presentation sugar for one tool.
-  Two more flavor touches when `flavor = "obsidian"`: (1) render each open question
-  as a `> [!question]` callout (and risks as `> [!warning]`) — native Obsidian
-  callouts that degrade to plain blockquotes everywhere else; (2) if `[review]
-  vault` is set in spawn.toml and the Advanced URI plugin is installed, the chat
-  digest links each open question straight to its heading:
-  `obsidian://adv-uri?vault={vault}&filepath={plan path}&heading={question heading}`.
+- **Flavors adapt rendering to the user's review tool.** When `[review] flavor` is
+  set in spawn.toml, also apply the matching section of `references/flavors.md`
+  (callouts, inline code embeds, mermaid diagrams, transclusion, chat deep links for
+  `obsidian`). Flavors are strictly additive — canonical links, frontmatter, and
+  markers always remain.
+- **Every dossier doc carries frontmatter.** MANIFEST's block is specified in its
+  template below; plans carry `dossier: plan` + `version`; ADRs carry `dossier: adr`
+  + `status` + `promotion`; contracts carry `dossier: contract` + `seam`. This is
+  core structure, not flavor: dashboards (Obsidian Bases), `yq`-based CLI tooling,
+  and the wrap-session harvest all read the same fields.
 
 ---
 
@@ -130,6 +126,12 @@ integration runs) — so the session can be replayed mentally from this file alo
 ## Plan snapshot template (`plans/NNN-<slug>.md`)
 
 ```markdown
+---
+dossier: plan
+version: {NNN}
+updated: {YYYY-MM-DD}
+---
+
 # Plan {NNN} — {feature-name}
 
 **Supersedes:** [{NNN-1}]({NNN-1 filename}) {or "none (initial)"}
@@ -169,10 +171,14 @@ One pattern or structural decision per doc. The Shape section is the contract su
 are held to — pseudo-code beats prose.
 
 ```markdown
-# ADR {NNN}: {title}
+---
+dossier: adr
+status: proposed        # proposed | hardened | amended
+promotion: session-only # kb-pattern | kb-decision | project-agent-docs | session-only
+updated: {YYYY-MM-DD}
+---
 
-**Status:** proposed | hardened (user-approved) | amended
-**Promotion candidate:** kb-pattern | kb-decision | project-agent-docs | session-only
+# ADR {NNN}: {title}
 
 ## Context
 
@@ -195,7 +201,7 @@ The call, in a sentence or two.
 What this buys, what it costs, what it forecloses.
 ```
 
-`Promotion candidate` is the harvest hint for wrap-session: `kb-*` docs are written
+The `promotion` frontmatter field is the harvest hint for wrap-session: `kb-*` docs are written
 into the knowledge base (generalized, project-agnostic where possible),
 `project-agent-docs` docs graduate into the repo's agent docs via the PR,
 `session-only` dies with the worktree.
@@ -207,6 +213,12 @@ into the knowledge base (generalized, project-agnostic where possible),
 One seam per doc. These become real code in chunk 0.
 
 ```markdown
+---
+dossier: contract
+seam: {seam-name}
+updated: {YYYY-MM-DD}
+---
+
 # Contract: {seam name}
 
 **Between:** {chunk/package A} ⇄ {chunk/package B}

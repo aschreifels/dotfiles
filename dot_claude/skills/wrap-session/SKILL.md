@@ -89,8 +89,9 @@ The `_plan/` dossier dies with the worktree — this phase decides what outlives
 Skip silently if the worktree has no dossier (legacy `PLAN.md`-only sessions included:
 their insights move to the ticket in Phase 3 and that's enough).
 
-1. Walk `_plan/adr/` and read each doc's `Promotion candidate` field, plus any
-   promotion notes in `handoff/wrap.md`.
+1. Walk `_plan/adr/` and read each doc's `promotion` frontmatter field (legacy
+   dossiers: a `**Promotion candidate:**` body line), plus any promotion notes in
+   `handoff/wrap.md`.
 2. Sort each ADR (and any contract doc whose reasoning generalizes):
    - **`kb-pattern` / `kb-decision`** → write directly into the knowledge base at
      `~/projects/necro-kb` (`patterns/` or `decisions/`), generalized — strip
