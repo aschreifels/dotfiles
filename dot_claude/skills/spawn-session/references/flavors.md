@@ -24,9 +24,12 @@ recognizing the value in the config.
 ## obsidian
 
 Assumes the user's vault is rooted at the **dossier dir** (`dossier_dir`, e.g.
-`~/dossiers`) — dossiers only; worktree code is deliberately *outside* the vault
-(indexing worktrees means millions of node_modules files; measured 95% of vault
-markdown was dependency READMEs). Relevant plugins: Bases (core), Advanced URI,
+`~/dossiers`) — dossiers only; worktree code is deliberately *outside* the vault.
+Never point the vault (or any indexer) at a working tree: every ecosystem carries
+dependency/build blobs — `node_modules`, Elixir `deps/`+`_build/`, Rust `target/`,
+venvs, `dist/` — and exclusion lists lose to new tools; an allowlist-by-construction
+vault can't bloat (measured before the split: 95% of vault markdown was dependency
+READMEs, 7.5M files watched). Relevant plugins: Bases (core), Advanced URI,
 Shell commands, Code Styler.
 
 ### Properties (Bases)
