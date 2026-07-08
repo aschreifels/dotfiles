@@ -18,17 +18,18 @@ The session has eight phases: **parse → ticket → branch → dossier → cont
 Invocation shape:
 
 ```
-<feature-name> [TICKET-HANDLE] [--draft] [--team <TEAM>] [--solo]
+<feature-name> [TICKET-HANDLE] [--draft] [--team <TEAM>] [--kb <ref>] [--solo]
 ```
 
 - `<feature-name>` — required. kebab-case short name, e.g. `my-cool-feature`.
 - `[TICKET-HANDLE]` — optional. Existing ticket handle like `ENG-1234`. Triggers the **fetch** flow.
 - `--draft` — optional. Creates a new ticket in the configured default project. Mutually exclusive with a passed ticket handle. Triggers the **create** flow.
 - `--team <TEAM>` — optional. Override `project_management.default_project` for the **create** flow (e.g. `--team SERV` to draft in the SERV team even when the config default is `DEST`). **Implies `--draft`** if not already passed. Mutually exclusive with a ticket handle (the handle's prefix already encodes the team).
+- `--kb <ref>` — optional. Pull session context from a knowledge-base article. `<ref>` is a slug, title fragment, or natural-language query resolved via qmd. Composes freely with the others: with `--draft`, the article seeds the draft ticket's title and description; with a ticket handle, both contexts load. See the KB flow in Phase 2.
 - `--solo` — optional. Skip sub-agent delegation; the orchestrator executes chunks inline. The dossier, contracts-first, and behavioral phases still run — `--solo` only changes *who* types the code.
 - `--init` — special. Skip the normal flow and walk the user through setting up the config file.
 
-Honour natural-language equivalents too. "Let's start work on my-cool-feature, ticket ENG-1234" parses to `my-cool-feature ENG-1234`. "Spawn a draft session for new-dashboard" parses to `new-dashboard --draft`. "Draft a SERV ticket for new-dashboard" parses to `new-dashboard --draft --team SERV`.
+Honour natural-language equivalents too. "Let's start work on my-cool-feature, ticket ENG-1234" parses to `my-cool-feature ENG-1234`. "Spawn a draft session for new-dashboard" parses to `new-dashboard --draft`. "Draft a SERV ticket for new-dashboard" parses to `new-dashboard --draft --team SERV`. "Spawn a session for the scribe capture gap from the KB" parses to `scribe-capture-gap --kb "scribe capture gap"`.
 
 If the feature name is missing or ambiguous, ask the user for it before doing anything else.
 
@@ -99,7 +100,14 @@ Three cases:
 - If found: render the create prompt with `{{provider}}`, `{{project}}`, `{{name}}` filled in, and execute it. Capture the newly-created ticket handle — it goes in the branch name.
 - If not found: tell the user and proceed as if no ticket was specified.
 
-**C. Neither** → Skip Phase 2 entirely.
+**C. Neither ticket nor `--kb`** → Skip Phase 2 entirely.
+
+**D. `--kb <ref>`** → KB context flow (composes with A or B; best-effort like tickets).
+- Resolve the ref: try `qmd search "<ref>"` for an exact-ish match, fall back to `qmd query "<ref>"`. One clear winner → Read the article in full. Multiple plausible hits → show the candidates (title + one-liner) and ask which one. None → tell the user and continue without KB context.
+- Treat the article as planning input with the same weight as a fetched ticket: it seeds the dossier — a handoff brief's work items typically become the first draft of the chunk map. Follow `[[wikilinks]]` central to the work (one hop).
+- If `--draft` is also present, seed the draft ticket's title and description from the article instead of just the feature name.
+- Note the article's path in `MANIFEST.md` as the originating brief — wrap-session's harvest closes it out (`status: completed` + Outcome section) when the work ships.
+- If qmd is unavailable, fall back to `rg -il "<ref>" <kb-root>` over the KB and Read the best match; never block the session on the KB.
 
 #### Default prompts
 

@@ -18,6 +18,7 @@ Parse the arguments as:
 - Second positional arg (optional): ticket handle, e.g. `ENG-1234`
 - `--draft`: create a new draft ticket in the default project
 - `--team <TEAM>`: override the default project for `--draft` (e.g. `--team SERV`). Implies `--draft`. Mutually exclusive with a passed ticket handle.
+- `--kb <ref>`: pull session context from a knowledge-base article (slug, title, or query — resolved via qmd)
 - `--solo`: execute chunks inline instead of delegating to sub-agents
 - `--init`: run interactive config setup instead of the normal flow
 
