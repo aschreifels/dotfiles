@@ -51,12 +51,36 @@ Editing rules:
   covering the ref plus a few lines of context. The embed reads the file at render
   time, so it tracks the code as it changes. Links remain the canonical ref; embeds
   are presentation sugar for one tool.
+  Two more flavor touches when `flavor = "obsidian"`: (1) render each open question
+  as a `> [!question]` callout (and risks as `> [!warning]`) — native Obsidian
+  callouts that degrade to plain blockquotes everywhere else; (2) if `[review]
+  vault` is set in spawn.toml and the Advanced URI plugin is installed, the chat
+  digest links each open question straight to its heading:
+  `obsidian://adv-uri?vault={vault}&filepath={plan path}&heading={question heading}`.
 
 ---
 
 ## MANIFEST.md template
 
+The frontmatter is machine-readable session state — keep it current as part of the
+write-MANIFEST-first rule (a state transition updates the frontmatter *and* the body).
+It's what dashboard tooling queries: an Obsidian **Base** filtering
+`dossier = manifest` and `state != wrapped` over a worktrees-rooted vault is a live
+board of every session on the machine; `yq`/CLI tools read the same fields.
+
 ```markdown
+---
+dossier: manifest
+feature: {feature-name}
+ticket: {TICKET-HANDLE or null}
+branch: {branch-name}
+state: planning   # planning | awaiting-signoff | executing | behavioral | integrating | wrapped
+chunks_total: 0
+chunks_accepted: 0
+questions_open: 0
+updated: {YYYY-MM-DD}
+---
+
 # {feature-name} — session manifest
 
 **Ticket:** {TICKET-HANDLE or "none"}

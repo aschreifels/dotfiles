@@ -64,7 +64,9 @@ default_project = "ENG"     # used when --draft creates a ticket
 # [review]
 # command = "zed {dossier}"
 # flavor = "obsidian"   # optional; dossier code refs additionally emit inline
-#                       # Embed Code File blocks (see references/dossier.md)
+#                       # Embed Code File blocks, questions render as callouts,
+#                       # and chat digests deep-link questions (references/dossier.md)
+# vault = "worktrees"   # optional; Obsidian vault name for Advanced URI deep links
 ```
 
 ### Interactive init
