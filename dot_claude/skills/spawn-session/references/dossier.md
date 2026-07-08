@@ -36,6 +36,13 @@ Editing rules:
   pauses dependent chunks — never a drive-by edit).
 - The user may edit any dossier file directly from their own editor. When told to
   "re-read the dossier", diff against what you last wrote and fold the deltas in.
+- **Code refs are clickable links, everywhere.** Any dossier doc that mentions code
+  (open questions, ADR context, contract landing sites, chunk scopes) links it as
+  `[<repo-rel-path>:<line>](<path relative to the doc>)` — e.g. from
+  `plans/001-initial.md`: `[users.ts:42](../../packages/api/src/users.ts:42)`. The
+  visible text stays repo-relative for readability; the target resolves from the
+  doc's own location so it's click-to-jump in Zed/editors and in chat. Never a bare
+  "in the delivery resolver" — name the file and line.
 
 ---
 
@@ -102,9 +109,13 @@ body later.
 ## Open questions
 
 ### Q1: {question}
+**Refs:** [{file}:{line}]({relative link}), [{file}:{line}]({relative link})
 [ANSWER NEEDED]
 
-{When answered — in chat or in-file — inline the answer below the question. Keep the
+{Every question carries Refs — links to the code that motivated it, so the user can
+click through and do a cursory review before answering. A question with no code
+anchor is usually a requirements question; say so instead of omitting the line.
+When answered — in chat or in-file — inline the answer below the question. Keep the
 question. Carry unanswered questions forward into the next version.}
 ```
 

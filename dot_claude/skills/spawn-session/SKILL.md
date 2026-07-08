@@ -187,7 +187,7 @@ Create the `.plan/` dossier at the repo root using the layout and templates in `
 2. **Plans are versioned, never edited.** Each revision is a new file — `plans/001-initial.md`, `plans/002-post-review.md`. The user reviews plan *diffs as documents*; editing a plan in place destroys that. `MANIFEST.md` always points at the current version.
 3. **MANIFEST.md is the living index.** It carries the live chunk map (with status), links to the current plan / ADRs / contracts, and the open-question count. Keep it in lockstep with the TodoWrite tool — chunk statuses and todos mirror each other, so the dossier alone is enough to resume a lost session.
 4. **Patterns and architecture go in `adr/`, not in the plan.** Each significant pattern or structural decision is a discrete ADR-style doc with a **Shape** section — pseudo-code that dictates signatures, file layout, and naming. These are the docs sub-agents are held to, and the candidates the wrap-session harvest promotes to the KB or the project's agent docs. Cite existing repo patterns by example-file path; write new ones as pseudo-code and harden them with the user.
-5. **Open questions get explicit answers.** Mark each `[ANSWER NEEDED]`. When the user answers — in chat *or* by editing the dossier file directly — inline the answer below the question; don't delete the question.
+5. **Open questions get explicit answers — and code anchors.** Every question carries a **Refs:** line linking the code it's based on (clickable relative links per the convention in `references/dossier.md`), so the user can jump to the file and review before answering. Mark each `[ANSWER NEEDED]`. When the user answers — in chat *or* by editing the dossier file directly — inline the answer below the question; don't delete the question.
 6. **Pause before execution.** Once the first full draft is complete, stop and hand off for review.
 
 #### Draft the plan
@@ -206,7 +206,7 @@ After the first complete draft, stop. **The dossier is canonical; chat gets a di
 - One short paragraph — what we're building and the pivot worth flagging.
 - The chunk map as a compact table (id, title, parallel group).
 - One-line-each list of ADRs and contracts, as clickable paths.
-- **Open questions rendered inline in full** — these block execution and deserve to be answered without opening a file.
+- **Open questions rendered inline in full, with their code refs as clickable links** — these block execution and deserve to be answered without opening a file, but the refs let the user jump to the code when an answer needs a look first.
 - The dossier path, so the user can jump in with any tool.
 
 Then say something like:
