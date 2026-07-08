@@ -55,6 +55,14 @@ default_project = "ENG"     # used when --draft creates a ticket
 # [project_management.prompts]
 # fetch = "..."
 # create = "..."
+
+# Optional — review tool launched at the pause ritual. {dossier} = absolute .plan/
+# path, {plan} = absolute path of the current plan snapshot. Examples:
+#   command = "zed {dossier}"                          # editor (code refs clickable)
+#   command = "open 'obsidian://open?path={plan}'"     # Obsidian (vault must contain the worktrees dir)
+#   command = "glow -p {plan}"                         # terminal read-only
+# [review]
+# command = "zed {dossier}"
 ```
 
 ### Interactive init
@@ -258,6 +266,10 @@ After the first complete draft, stop. **The dossier is canonical; chat gets a di
 - One-line-each list of ADRs and contracts, as clickable paths.
 - **Open questions rendered inline in full, with their code refs as clickable links** — these block execution and deserve to be answered without opening a file, but the refs let the user jump to the code when an answer needs a look first.
 - The dossier path, so the user can jump in with any tool.
+
+If `[review] command` is configured in `spawn.toml`, launch it now (non-blocking,
+after posting the digest) with `{dossier}`/`{plan}` substituted — the user's review
+tool opens itself; they shouldn't have to. Skip silently if the command fails.
 
 Then say something like:
 
