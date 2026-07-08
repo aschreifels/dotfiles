@@ -45,6 +45,7 @@ Schema:
 [defaults]
 branch_prefix = "as"        # short prefix at the head of every branch
 base_branch = "main"        # branch to create feature branches from
+worktree_dir = "~/worktrees" # optional; parent for skill-created worktrees: {worktree_dir}/{repo}/{name}
 
 [project_management]
 provider = "linear"         # linear | notion | jira | none
@@ -137,12 +138,21 @@ checkbox — **create the worktree yourself; never edit in the main checkout**:
 
 1. Make sure Phase 2 ran first, so a drafted/fetched ticket handle can go into the name
    (the phase order already guarantees this).
-2. Call the `EnterWorktree` tool with `name: {TICKET}_{feature-name}` (no ticket →
-   `{feature-name}`). This creates the worktree + branch and switches the session into
-   it — **the directory name now matches the initiative**, which is the point: `git
-   worktree list` reads as a work log.
-3. Continue with the naming rule below — rename the EnterWorktree-created branch to
-   the canonical `{branch_prefix}/…` form (the rename-in-place rule).
+2. Create the worktree at the standard **out-of-repo** location — worktrees never live
+   inside the repo (`.claude/worktrees/` is not acceptable):
+   ```bash
+   WT="${worktree_dir:-$HOME/worktrees}/{repo-name}/{TICKET}_{feature-name}"
+   git worktree add "$WT" -b {branch_name} {base_branch}
+   ```
+   This matches the desktop app's own location (`~/worktrees/<repo>/…`) and names the
+   directory after the initiative — **`git worktree list` reads as a work log**, and
+   the branch is born canonical (no rename needed in this flow).
+3. Switch the session into it with the `EnterWorktree` tool using `path: $WT` (it
+   enters any worktree registered in `git worktree list`). If the harness rejects a
+   path outside `.claude/worktrees/`, fall back to `EnterWorktree` with
+   `name: {TICKET}_{feature-name}`, tell the user the worktree landed in-repo, and
+   remove the now-unused `$WT` (`git worktree remove "$WT"` + delete the branch it
+   reserved) before continuing with the rename rule below.
 
 If the harness has no `EnterWorktree` tool, **stop** and tell the user — do not create
 the branch or edit files from the main checkout.
