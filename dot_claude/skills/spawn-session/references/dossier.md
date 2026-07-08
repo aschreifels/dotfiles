@@ -27,7 +27,10 @@ Editing rules:
 
 - **`MANIFEST.md`** is living state — edit freely, keep in lockstep with TodoWrite.
 - **`plans/`** is append-only. A revision = a new numbered file. The user reviews plans
-  as whole documents, not as edits to a previous one.
+  as whole documents, not as edits to a previous one. **One sanctioned in-place edit:**
+  answers to open questions get inlined below their question in the *current* snapshot
+  (by the user directly, or by the session relaying a chat answer) — answering resolves
+  a plan, it doesn't revise it. Only a scope-changing answer triggers a new version.
 - **`adr/` and `contracts/`** may be amended during planning; once execution starts they
   only change through the orchestrator (a contract amendment is a deliberate act that
   pauses dependent chunks — never a drive-by edit).
