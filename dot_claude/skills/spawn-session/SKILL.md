@@ -63,6 +63,8 @@ default_project = "ENG"     # used when --draft creates a ticket
 #   command = "glow -p {plan}"                         # terminal read-only
 # [review]
 # command = "zed {dossier}"
+# flavor = "obsidian"   # optional; dossier code refs additionally emit inline
+#                       # Embed Code File blocks (see references/dossier.md)
 ```
 
 ### Interactive init

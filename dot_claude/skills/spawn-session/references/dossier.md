@@ -43,6 +43,14 @@ Editing rules:
   visible text stays repo-relative for readability; the target resolves from the
   doc's own location so it's click-to-jump in Zed/editors and in chat. Never a bare
   "in the delivery resolver" — name the file and line.
+  **Obsidian flavor (`[review] flavor = "obsidian"` in spawn.toml):** in addition to
+  (never instead of) each link, emit an [Embed Code File](https://github.com/almariah/embed-code-file)
+  block rendering the referenced lines inline — a fenced `embed-<language>` block
+  with `PATH:` vault-relative from the worktrees parent dir (the assumed vault root,
+  e.g. `vault://curri/DEST-616_feature/packages/api/src/users.ts`) and `LINES:`
+  covering the ref plus a few lines of context. The embed reads the file at render
+  time, so it tracks the code as it changes. Links remain the canonical ref; embeds
+  are presentation sugar for one tool.
 
 ---
 
