@@ -34,7 +34,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 ## Tooling
 
 - **Prefer project-local scripts over invoking tools directly.** When a project defines scripts that wrap a tool (e.g. in `package.json`, `Makefile`, `justfile`), use those instead of calling the underlying CLI directly. Local scripts have project-specific flags, paths, and defaults already baked in — reaching past them risks missing that context.
-- **Personal CLI tools ride the Charm stack.** New shell functions/scripts (`~/.zsh/functions/`) use `gum` for interaction (filter/choose/confirm/spin), `glow` for rendering markdown, and `yq`/`jq` for parsing structured data — no hand-rolled bash UI, no awk/sed parsing gymnastics. When a tool outgrows shell (persistent state, multiple screens), graduate it to a small Go program on bubbletea/lipgloss/huh rather than growing the script. `gum` and `glow` live in the chezmoi brew manifest; `kb-open` is the reference example.
+- **Personal CLI tools ride the Charm stack.** New shell functions/scripts (`~/.zsh/functions/`) use `gum` for interaction (filter/choose/confirm/spin), `glow` for rendering markdown, and `yq`/`jq` for parsing structured data — no hand-rolled bash UI, no awk/sed parsing gymnastics. When a tool outgrows shell (persistent state, multiple screens, orchestration with retry/polling loops), graduate it to a Go program on the charm libs (bubbletea/lipgloss/huh) rather than growing the script. `gum` and `glow` live in the chezmoi brew manifest. Reference examples: `kb-open` is the script tier done right; [cwt](https://github.com/aschreifels/cwt) is the graduation done right — born as the `zcwt` zsh function, rebuilt as a Go TUI when it outgrew shell.
 
 ## Pull Requests
 
