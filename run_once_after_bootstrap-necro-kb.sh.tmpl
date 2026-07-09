@@ -1,0 +1,31 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Bootstrap the necro-kb knowledge-base stack on a new machine:
+#   1. clone the KB          2. register + embed the qmd index          3. load scribe's cron
+# Runs after package install (scribe/qmd/git come from the brew manifest).
+# Idempotent and best-effort — guards skip anything already in place, and a
+# failed step never aborts `chezmoi apply` (re-run apply once prerequisites exist).
+set -uo pipefail
+
+KB="$HOME/projects/necro-kb"
+
+# 1. Clone the KB (needs SSH access to the private repo; skips if the key isn't ready yet).
+if [ ! -d "$KB/.git" ]; then
+    mkdir -p "$HOME/projects"
+    if ! git clone git@github.com:aschreifels/necro-kb.git "$KB"; then
+        echo "necro-kb bootstrap: clone failed (SSH key set up? repo access?) — skipping index + cron; re-run 'chezmoi apply' once fixed." >&2
+        exit 0
+    fi
+fi
+
+# 2. Register the qmd collection + build embeddings if the KB isn't indexed yet.
+#    (This is the step that was silently missing — no collection means qmd query returns nothing.)
+if command -v qmd >/dev/null 2>&1 && ! qmd collection list 2>/dev/null | grep -q necro-kb; then
+    qmd collection add "$KB" && qmd embed
+fi
+
+# 3. Load scribe's LaunchAgents so maintenance (sync, reindex, dream, capture) runs on cron.
+if command -v scribe >/dev/null 2>&1; then
+    scribe cron install || true
+fi
+{{ end -}}
