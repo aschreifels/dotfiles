@@ -47,6 +47,7 @@ branch_prefix = "as"        # short prefix at the head of every branch
 base_branch = "main"        # branch to create feature branches from
 worktree_dir = "~/worktrees" # optional; parent for skill-created worktrees: {worktree_dir}/{repo}/{name}
 dossier_dir = "~/dossiers"   # optional; real home of dossiers (symlinked into worktrees as _plan)
+projects_dir = "~/projects"  # optional; durable main-checkout root — code-ref "open in editor" links target {projects_dir}/{repo}/…
 
 [project_management]
 provider = "linear"         # linear | notion | jira | none
@@ -67,7 +68,10 @@ default_project = "ENG"     # used when --draft creates a ticket
 # flavor = "obsidian"   # optional; adapts dossier rendering to the review tool —
 #                       # callouts, inline code embeds, mermaid, transclusion, chat
 #                       # deep links. Guidelines per flavor: references/flavors.md
-# vault = "worktrees"   # optional; Obsidian vault name for Advanced URI deep links
+# vault = "dossiers"    # optional; Obsidian vault name (rooted at dossier_dir) for Advanced URI deep links
+# editor_open_command_id = ""  # optional; Shell Commands plugin id for the "open path in
+#                       # editor" command — makes obsidian-flavor code refs clickable into
+#                       # the main checkout. Empty/unset = no jump links.
 ```
 
 ### Interactive init

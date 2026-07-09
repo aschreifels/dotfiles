@@ -9,6 +9,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Don't revert changes** unless they caused errors or I explicitly ask.
 - **Don't push to remote** unless I explicitly ask. Always confirm before any `git push`. Incremental local commits capturing discrete bodies of progress are welcome. **Exception:** when the branch already has an open PR, pushing a **master-merge** (integrating latest master into the feature branch) is pre-authorized — do it automatically after the merge is clean and verified. This exception is only for master-merge updates; pushing new feature commits still needs an explicit ask.
 - **Merge, never rebase.** When pulling or integrating master into a feature branch, always use `git merge` — never `git pull --rebase` or `git rebase`. Rebasing rewrites history and can silently drop or duplicate commits.
+- **Exception (chezmoi):** dotfile syncs via `chezmoi add` ride chezmoi's `autoCommit`/`autoPush` and are pre-authorized — that push is the whole point of the sync. See the chezmoi bullet under Tooling.
 
 ## Code Changes
 
@@ -34,6 +35,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 ## Tooling
 
 - **Prefer project-local scripts over invoking tools directly.** When a project defines scripts that wrap a tool (e.g. in `package.json`, `Makefile`, `justfile`), use those instead of calling the underlying CLI directly. Local scripts have project-specific flags, paths, and defaults already baked in — reaching past them risks missing that context.
+- **`chezmoi add` managed files right after editing them.** When you modify a file chezmoi manages, `chezmoi add` it in the same session so the change reaches other machines via `chezmoi update`. `autoCommit`/`autoPush` are on and pre-authorized — the add commits and pushes, which is the intent for dotfiles. Templatize machine-specific values with chezmoi data (`{{ .chezmoi.homeDir }}` for home paths, the `.machine` var for work/personal blocks) instead of hardcoding a username or home dir — a hardcoded `/Users/<name>` breaks the other machine's `chezmoi update`.
 - **Personal CLI tools ride the Charm stack.** New shell functions/scripts (`~/.zsh/functions/`) use `gum` for interaction (filter/choose/confirm/spin), `glow` for rendering markdown, and `yq`/`jq` for parsing structured data — no hand-rolled bash UI, no awk/sed parsing gymnastics. When a tool outgrows shell (persistent state, multiple screens, orchestration with retry/polling loops), graduate it to a Go program on the charm libs (bubbletea/lipgloss/huh) rather than growing the script. `gum` and `glow` live in the chezmoi brew manifest. Reference examples: `kb-open` is the script tier done right; [cwt](https://github.com/aschreifels/cwt) is the graduation done right — born as the `zcwt` zsh function, rebuilt as a Go TUI when it outgrew shell.
 
 ## Pull Requests
@@ -78,6 +80,7 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 ## Knowledge Base (necro-kb)
 
 - **Write directly to `~/projects/necro-kb`, never use drop files in project repos.** Don't create `.claude/necro-kb/` directories inside any project — committed or untracked, they're noise. Write KB articles directly to the right place in the KB (`wiki/`, `decisions/`, `patterns/`, etc.) in the same session.
+- **Memory captures land in the KB, not just Claude's memory store.** Facts worth persisting across sessions belong in necro-kb (git-committed, qmd-queryable) so they compact and grow over time — treat the Claude Code/Desktop memory interfaces as a cache and the KB as the source of truth. The file-based agent memory syncs into the KB through `scribe` (the pipeline that already extracts repos, sessions, and URLs); see `tools/scribe.md` for the mechanism.
 
 ## Meta
 

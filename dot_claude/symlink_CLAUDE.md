@@ -1,1 +1,0 @@
-/Users/alex.schreifels/.config/ai/CLAUDE.md

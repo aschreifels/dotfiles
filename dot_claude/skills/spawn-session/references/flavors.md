@@ -29,8 +29,8 @@ Never point the vault (or any indexer) at a working tree: every ecosystem carrie
 dependency/build blobs — `node_modules`, Elixir `deps/`+`_build/`, Rust `target/`,
 venvs, `dist/` — and exclusion lists lose to new tools; an allowlist-by-construction
 vault can't bloat (measured before the split: 95% of vault markdown was dependency
-READMEs, 7.5M files watched). Relevant plugins: Bases (core), Advanced URI,
-Shell commands, Code Styler.
+READMEs, 7.5M files watched). Relevant plugins: Bases (core), Code Styler,
+Advanced Tables, Advanced URI, Shell Commands, Embed Code File.
 
 ### Properties (Bases)
 
@@ -58,25 +58,49 @@ blockquotes everywhere else:
 
 Use the folded form (`[!x]-`) for anything long — the reader unfolds on demand.
 
-### Inline code excerpts
+### Code references
 
-Code lives outside the vault, so refs can't be followed or live-embedded from
-Obsidian. In addition to (never instead of) every canonical code-ref link, quote the
-referenced lines as a **static excerpt** — a plain fenced code block, written at
-dossier-write time, directly under the Refs line:
+The vault can't read the worktree (Obsidian sandboxes plugins to vault files) and the
+worktree is deleted at wrap — so a dossier never points *live* at worktree code. Which
+axis a code block falls on decides how it renders:
 
-````markdown
-**Refs:** [users.ts:42](../../packages/api/src/users.ts:42)
-```typescript
-// packages/api/src/users.ts:40-46
-{the referenced lines plus a little surrounding context}
-```
-````
+**Code we author here** — ADR **Shape** pseudo-code, contract types/SDL. Plain fenced
+blocks; **Code Styler** dresses them (line numbers, header, language tag). This code
+doesn't exist on disk yet, so there's nothing to embed or jump to — it *is* the source.
 
-Excerpts are snapshots — if the review round changes the code under a ref, refresh
-the excerpt when folding answers in. For click-through to the live file, the Shell
-commands plugin can open an absolute path in the user's editor; that's user-side
-vault config, not dossier content.
+**References to existing main/production code** — open-question Refs, ADR context,
+contract landing sites. Pin these to durable homes, never the ephemeral worktree:
+
+1. **Canonical relative link, always** —
+   `[users.ts:42](../../packages/api/src/users.ts:42)`. Visible text is repo-relative;
+   the target resolves when the dossier is opened *through* the worktree symlink
+   (Zed, editors). The portable fallback that survives every renderer.
+2. **Live inline render via GitHub (Embed Code File)** — directly under the Refs line,
+   for code that's actually on the remote. Resolve `{owner}/{repo}` from
+   `git remote get-url origin`; pin the ref to the base commit the worktree was cut
+   from (a SHA — so the embed can't drift), falling back to `base_branch`:
+   ````markdown
+   ```embed-typescript
+   PATH: "https://raw.githubusercontent.com/{owner}/{repo}/{sha}/packages/api/src/users.ts"
+   LINES: "40-46"
+   TITLE: "users.ts:40-46"
+   ```
+   ````
+   No fetchable remote (unpushed base, a private repo without one) → skip the embed and
+   fall back to a **static excerpt**: a plain fenced block of the referenced lines,
+   written at dossier-write time, refreshed if the code changes under the ref during
+   review. (Code Styler renders it too.)
+3. **Jump-to-edit in the local editor (Shell Commands)** — when
+   `[review] editor_open_command_id` is set, render an "open in editor" link whose href
+   fires the plugin against the **main checkout** (`{projects_dir}/{repo}/…`, default
+   `~/projects`) — durable, never the worktree:
+   `[open in editor](obsidian://shell-commands?vault={vault}&execute={editor_open_command_id}&_abs=/Users/…/projects/{repo}/packages/api/src/users.ts:42)`.
+   The paired command is `zed "{{_abs}}"` (Zed opens `path:line`; swap for the user's
+   editor). Custom URI variables must start with `_`. The command + its id are user-side
+   config (see the vault README); the dossier only emits the link. Unset → omit the link.
+
+The default for an existing-code ref is **relative link + GitHub embed + editor link**;
+drop to the static-excerpt fallback only when there's no remote to embed from.
 
 ### Diagrams
 
@@ -106,5 +130,9 @@ digest links each open question directly to its heading:
 - No Obsidian-only syntax as the *sole* carrier of information (a callout may dress
   a question; the question text, Refs links, and `[ANSWER NEEDED]` marker must
   survive rendering as a plain blockquote).
+- No Embed Code File `PATH:` pointing at the worktree or any absolute filesystem path
+  — the plugin reads only `vault://` and remote `http(s)://`, so an external path
+  silently renders nothing. Existing code embeds via the GitHub raw URL; local code
+  is reached through the Shell Commands editor link, not an embed.
 - No `.obsidian/`-dependent behavior (themes, CSS snippets, hotkeys) — the user's
   vault config is theirs.
