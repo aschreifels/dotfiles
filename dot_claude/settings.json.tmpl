@@ -4,6 +4,15 @@
     "command": "~/.claude/statusline.sh"
   },
   "includeCoAuthoredBy": false,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "{{ .chezmoi.homeDir }}/.claude/hooks/kb-pulse.sh" }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

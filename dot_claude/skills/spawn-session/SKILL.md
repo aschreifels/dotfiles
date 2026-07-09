@@ -272,7 +272,14 @@ _plan/
 
 Work through it in this order — it's fine to loop back as later sections clarify earlier ones:
 
-1. **ADRs** (`adr/`) — how the solution fits the existing system; the patterns in play, each with its Shape pseudo-code.
+0. **Pattern recall** — before drafting anything, sweep the KB pattern library against
+   the work's shape: `qmd search "<context tags for this feature>"` (fast BM25 path;
+   pattern articles carry `context_tags`/`use_when` manifests for exactly this), falling
+   back to `qmd query` for fuzzier matches. Hits become ADR inputs — cite the pattern
+   article and honor its `use_when`/`avoid_when` rather than re-deriving the approach.
+   No hits is fine; a miss on a pattern that *should* have existed is worth noting in
+   the wrap handoff (it seeds the next harvest).
+1. **ADRs** (`adr/`) — how the solution fits the existing system; the patterns in play, each with its Shape pseudo-code. When an ADR follows a recalled KB pattern, name it; when it invents something reusable, mark it `promotion: kb-pattern` so the wrap harvest lands it back in the library.
 2. **Contracts** (`contracts/`) — the typed seams between chunks and packages: types, signatures, schema/SDL changes, invariants. These are what you and the user harden *together* — they're the control surface for the shape of the code.
 3. **Plan snapshot** (`plans/001-initial.md`) — summary of proposed changes, the chunk map (see below), risks, open questions.
 4. **Chunk map** — carve execution into chunks: id, scope (explicit file list), depends-on, parallel-safe flag, ADR/contract refs, done-criteria (the scoped verify commands). Chunk 0 is always the contracts chunk (Phase 5). Chunks are parallel-safe **only** when their file sets are provably disjoint *and* they don't touch shared generated files. Mirror the map into `MANIFEST.md`.

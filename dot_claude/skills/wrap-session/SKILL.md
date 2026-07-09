@@ -114,6 +114,33 @@ their insights move to the ticket in Phase 3 and that's enough).
 5. Keep it honest: harvest only docs with real reuse value. An empty harvest is a fine
    outcome — don't fabricate KB entries to make the phase look productive.
 
+### Phase 4b — Pattern sweep (the librarian)
+
+Phase 4 harvests what was *marked* (`promotion:` hints); this phase catches the
+code-level patterns nobody marked — the idioms a reviewer would say "we always do it
+this way" about. Skip silently when the session produced no code diff (docs/config-only
+sessions have nothing to sweep).
+
+1. **Sweep via a Sonnet sub-agent** (Agent tool, `model: sonnet`). Brief it with: the
+   session's full diff (`git -C <worktree_path> diff <base_branch>...HEAD`), the list of
+   existing pattern titles + `context_tags` from the KB's `patterns/` dir, and the
+   pattern manifest schema from the KB's CLAUDE.md. Ask for candidate patterns only —
+   each with: name, Shape (pseudo-code + the landed exemplar path), proposed `use_when`
+   / `avoid_when` / `context_tags` (reuse existing tag vocabulary; flag any new tag it
+   had to mint), and a one-line why-this-recurs argument. Extending an existing pattern
+   article beats proposing a near-duplicate — the agent must check.
+2. **Review gate — candidates are review input, never silent writes.** Show the user
+   the candidate list (name + use_when, one line each). The user arbitrates; a wrong
+   pattern pins wrong behavior forever, so when in doubt, drop it.
+3. **Land accepted candidates** as `patterns/<slug>.md` in the KB with the full
+   retrieval manifest, `maturity: candidate`, and `source_exemplar` pinned to the
+   session's landing commit. New articles get an `_index.md` line. Language flavors are
+   **not** generated at harvest — they're rendered lazily on first cross-language recall
+   (don't pay for flavors nobody has needed).
+4. **Run the landing pass** (same as any KB write): `scribe lint --changed`, tier fill,
+   `scribe sync --reindex`, `scribe commit`.
+5. An empty sweep is a fine outcome — same honesty rule as Phase 4.
+
 ### Phase 5 — Voice capture (lightweight)
 
 Harvest voice signal from this session into the corpus — the raw pool that the
@@ -193,6 +220,7 @@ Summarize in a tight block:
 - **Branch:** deleted / kept (`<branch>`)
 - **Ticket:** finalized / comment posted on `<TICKET>` / skipped (reason)
 - **Harvest:** N doc(s) promoted to the KB / flagged as follow-ups / skipped (nothing to promote)
+- **Patterns:** N candidate(s) swept → N accepted to the library / skipped (no diff or no candidates)
 - **Voice:** captured N note(s) to the corpus / skipped (no signal)
 - **Warnings:** anything left behind (e.g. stashed changes, unpushed commits user chose to leave, etc.)
 
