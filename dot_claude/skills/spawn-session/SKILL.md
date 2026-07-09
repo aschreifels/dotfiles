@@ -7,7 +7,7 @@ description: Kick off a new coding session inside a freshly-opened git worktree.
 
 Starts a new coding session inside a Claude Code worktree. The worktree itself is already created by the desktop app — this skill handles everything from "I'm in the worktree" onward: branch checkout, ticket integration, the dossier ritual, and orchestrated execution.
 
-The session has eight phases: **parse → ticket → branch → dossier → contracts → orchestrate → behavioral pass → integrate & close**. The dossier phase is the heart of this skill. Do not skip it. Do not start coding until the user has signed off on the plan.
+The session has nine phases: **parse → ticket → branch → dossier → contracts → orchestrate → behavioral pass → self-review → integrate & close**. The dossier phase is the heart of this skill. Do not skip it. Do not start coding until the user has signed off on the plan.
 
 **Model posture (replaces all old model-switching advice):** the session model *is* the orchestrator and never changes. It owns discovery, planning, contract design, chunk carving, review, and anything cross-cutting. Execution chunks are delegated to Sonnet-class sub-agents via the Agent tool (`model: sonnet`). Never suggest a `/model` switch in either direction. If the harness has no Agent tool (or sub-agents are unavailable), fall back to executing chunks inline — the protocol below still applies, minus the delegation.
 
@@ -358,7 +358,7 @@ Full protocol — brief template, report contract, review loop, serialized-ops l
 
 1. **Delegation is unconditional — there is no size threshold.** Every executor chunk goes to a Sonnet sub-agent, *including a chunk map of one*: the orchestrator's tokens are the expensive ones, executors are faster and cheaper, and delegating keeps the orchestrator's context clean for review. Do not weigh chunk count or diff size, and do not record a "session mode" — there is no mode decision to make. The orchestrator writes production code in exactly two cases: absorbing a chunk after the revision cap / escalation, and `--solo`. On those inline paths the protocol still applies (briefs-as-specs, per-chunk commits, verification); the brief just becomes your own spec.
 2. **Brief** each chunk (`chunks/NN-brief.md`): objective, explicit file list, *don't-touch* boundaries, pointers to the relevant ADRs/contracts (point, don't inline — executors can Read the dossier), done-criteria commands, the report format, and the standing constraints (no codegen, no lockfile ops, no migrations, no commits, work only in the worktree path given).
-3. **Spawn** executors with the Agent tool, `model: sonnet`, in the background. Spawn a parallel group only when the chunks' file sets are disjoint; otherwise run in dependency order. Relay a one-line status to the user as each chunk lands.
+3. **Spawn** executors with the Agent tool in the background, model chosen by the chunk's **complexity rating** (`trivial` → haiku, `standard`/`complex` → sonnet — matrix in `references/chunk-protocol.md`). Spawn a parallel group only when the chunks' file sets are disjoint; otherwise run in dependency order. Relay a one-line status to the user as each chunk lands.
 4. **Review the diff, not the synopsis.** When an executor reports, read its report (`chunks/NN-report.md`), then review the actual `git diff` for the chunk's files against the ADR shapes and contracts. Executors over-claim; the diff doesn't.
 5. **Accept → serialized ops → commit.** On accept, the orchestrator runs anything from the chunk's *needs* list (codegen, deps, migrations, integration-test runs — these are orchestrator-only, serialized, never parallel), verifies, and commits the chunk. One commit per accepted chunk — clean rollback, and round-2 reviews get a well-defined diff.
 6. **Revise via SendMessage, max 2 rounds.** Revision notes go back to the *same* agent (its context is warm). After 2 failed rounds, or if the executor reports blocked: the orchestrator takes the chunk inline, or surfaces it to the user if it's a judgment call. Never let the loop grind.
@@ -378,7 +378,32 @@ After all chunks are accepted and committed, run the behavioral-spec pass — **
 - Use the project's **recorded behavioral substrate** (check the KB and the project's agent docs). If the project has none, hardening one with the user is a first-class deliverable of this session — record it afterward so future sessions inherit it.
 - Delegate spec-writing to a dedicated Sonnet agent with an orchestrator-written brief built from `contracts/` + the plan summary, or write them inline for small sessions. **Review specs at the highest bar** — a wrong spec pins wrong behavior. Small sessions extend an existing scenario rather than authoring a new suite.
 
-### Phase 8 — Integration pass & close-out
+### Phase 8 — Self-review & fix dispatch
+
+After the behavioral pass — so review covers the specs too, and fixes land under the
+behavioral net (a fix executor can't silently regress what the specs pin):
+
+1. **Review runs in a sub-agent, never the main thread.** Spawn a Sonnet reviewer
+   briefed to run the `pr-review` skill in self-review mode against the branch
+   (`git diff {base_branch}...HEAD`), write findings to
+   `_plan/review/001-findings.md` — grouped by severity, stable IDs, each with
+   code-ref links per the dossier convention — and return the doc. The orchestrator's
+   job is **triage, not re-review**: read the findings against the dossier's
+   ADRs/contracts, drop noise, then surface the digest to the user for arbitration
+   (pr-review's keep/drop semantics; never apply fixes without the user's word).
+2. **Kept findings become fix chunks.** Append `R#` rows to the chunk map, complexity-
+   rated like any chunk (most fixes are `trivial` or `standard` — see the matrix in
+   `references/chunk-protocol.md`), brief them (finding text + refs + done-criteria),
+   and dispatch per the standard protocol. **Never fix findings inline in the main
+   thread** — the review loop's economics are the chunk protocol's economics.
+3. Accept → serialized ops → commit per fix chunk (one commit per parallel batch is
+   fine when fixes are tiny and related). Re-run affected done-criteria; the
+   behavioral suite is the regression net.
+4. Record disposition in the MANIFEST (finding → fixed `R#` / dropped + why). A
+   finding class that recurs across sessions is a missing Shape rule — note it in the
+   wrap handoff so the ADR (or the KB pattern) gets the rule, not the next reviewer.
+
+### Phase 9 — Integration pass & close-out
 
 The orchestrator's own final gate — chunk-scoped verification doesn't catch seam bugs between chunks:
 

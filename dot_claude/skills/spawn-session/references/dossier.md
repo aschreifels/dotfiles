@@ -24,6 +24,9 @@ _plan/
   chunks/
     01-brief.md               # written by the orchestrator (Phase 6)
     01-report.md              # written by the executor
+    R1-brief.md               # review-fix chunks (Phase 8) — same protocol
+  review/
+    001-findings.md           # self-review findings (Phase 8): severity, IDs, refs
   handoff/
     wrap.md                   # close-out summary; harvest input for wrap-session
 ```
@@ -102,10 +105,11 @@ updated: {YYYY-MM-DD}
 
 ## Chunk map (live)
 
-| # | Chunk | Files (scope) | Depends on | Parallel group | Refs | Status |
-|---|-------|---------------|------------|----------------|------|--------|
-| 0 | Contracts | ... | — | — (barrier: blocks all) | contracts/* | pending |
-| 1 | ... | ... | 0 | A | adr/001, contracts/x | pending |
+| # | Chunk | Files (scope) | Depends on | Parallel group | Refs | Complexity | Status |
+|---|-------|---------------|------------|----------------|------|------------|--------|
+| 0 | Contracts | ... | — | — (barrier: blocks all) | contracts/* | standard | pending |
+| 1 | ... | ... | 0 | A | adr/001, contracts/x | standard | pending |
+| R1 | {review fix} | ... | review | — | review/001 #ID | trivial | pending |
 
 Status values: `pending → briefed → executing → in-review → revising → accepted (commit <sha>)`,
 or `escalated` / `absorbed-inline`.
