@@ -20,7 +20,23 @@ Every chunk row carries:
 | Depends on | Chunk ids that must be *accepted and committed* first. |
 | Parallel group | Chunks in the same group may run concurrently — only if their file sets are provably disjoint **and** none touch shared generated files (codegen output, lockfiles). When in doubt, sequence. |
 | Refs | ADR / contract docs the chunk is held to. |
+| Complexity | `trivial` \| `standard` \| `complex` — set at carve time; picks the executor model and brief depth (matrix below). |
 | Done-criteria | Scoped verify commands (typecheck, lint, unit; chunk-scoped integration only when it won't contend for shared services). |
+
+## Complexity matrix
+
+The knob the harness exposes per sub-agent is the **model**, not reasoning effort —
+so complexity maps to model tier + brief depth. (If the harness ever exposes a
+per-agent effort parameter, this same column maps straight onto it.)
+
+| Complexity | Executor | Use for |
+|---|---|---|
+| `trivial` | haiku | Mechanical, tightly bounded, cheap to redo: renames, log wording, small guard clauses, review fixes with an exact prescription. If a haiku chunk fails one revision round, re-dispatch to sonnet rather than iterating. |
+| `standard` | sonnet | The default: any chunk implementing against a Shape/contract. |
+| `complex` | sonnet + deeper brief | Multi-file logic, subtle edge cases. The brief carries worked examples, an explicit edge-case list, and an instruction to reason through the approach before editing. Still sonnet — a chunk that feels beyond sonnet-with-a-good-brief is a carving smell (split it) or orchestrator-absorb territory, not a bigger model's job. |
+
+Rate conservatively: when torn between two ratings, take the higher. `trivial` is an
+optimization, not a default — a wrong haiku dispatch costs a revision round.
 
 Carving guidance: file-disjointness is a design forcing-function, not just a safety
 rule — if two chunks can't be carved apart, the seam between them probably wants a
