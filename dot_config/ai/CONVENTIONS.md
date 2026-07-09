@@ -81,6 +81,7 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 
 - **Write directly to `~/projects/necro-kb`, never use drop files in project repos.** Don't create `.claude/necro-kb/` directories inside any project — committed or untracked, they're noise. Write KB articles directly to the right place in the KB (`wiki/`, `decisions/`, `patterns/`, etc.) in the same session.
 - **Memory captures land in the KB, not just Claude's memory store.** Facts worth persisting across sessions belong in necro-kb (git-committed, qmd-queryable) so they compact and grow over time — treat the Claude Code/Desktop memory interfaces as a cache and the KB as the source of truth. The file-based agent memory syncs into the KB through `scribe` (the pipeline that already extracts repos, sessions, and URLs); see `tools/scribe.md` for the mechanism.
+- **Run the sync tool to actually land changes — don't leave it to cron.** System tools (chezmoi, scribe) keep machines/indexes in sync; run them as the last step of the work, not passively. After writing KB articles, run `scribe sync --reindex` (reindex qmd) so they're queryable and let scribe commit — a file on disk that isn't reindexed won't surface in `qmd query`. Per-machine bootstrap gotcha: if `qmd status` shows 0 documents / no collection, run `qmd collection add ~/projects/necro-kb` then `qmd embed` once — scribe doesn't create the collection.
 
 ## Meta
 
