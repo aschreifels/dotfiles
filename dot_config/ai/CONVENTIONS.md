@@ -10,6 +10,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Don't push to remote** unless I explicitly ask. Always confirm before any `git push`. Incremental local commits capturing discrete bodies of progress are welcome. **Exception:** when the branch already has an open PR, pushing a **master-merge** (integrating latest master into the feature branch) is pre-authorized — do it automatically after the merge is clean and verified. This exception is only for master-merge updates; pushing new feature commits still needs an explicit ask.
 - **Merge, never rebase.** When pulling or integrating master into a feature branch, always use `git merge` — never `git pull --rebase` or `git rebase`. Rebasing rewrites history and can silently drop or duplicate commits.
 - **Exception (chezmoi):** dotfile syncs via `chezmoi add` ride chezmoi's `autoCommit`/`autoPush` and are pre-authorized — that push is the whole point of the sync. See the chezmoi bullet under Tooling.
+- **Exception (spawn-session close-out):** the terminal step of a completed spawn-session run pushes the feature branch and opens a **draft** PR — pre-authorized, because that push is how the changeset surfaces for review in the Claude Code desktop app. Draft only; marking it ready-for-review still needs an explicit ask. Gated on a green integration pass.
 
 ## Code Changes
 

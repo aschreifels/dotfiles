@@ -410,7 +410,17 @@ The orchestrator's own final gate — chunk-scoped verification doesn't catch se
 1. Full lint + typecheck + unit across the touched surface; integration and behavioral suites against real services.
 2. Reconcile `MANIFEST.md`: all chunks accepted, all questions answered, deviations documented.
 3. Write `handoff/wrap.md`: what shipped vs. planned, deviations, ADRs worth promoting (the harvest input for wrap-session), follow-ups.
-4. If `--draft`, finalize the ticket per the create prompt.
+4. **Open a draft PR** — this is how the changeset surfaces for review in the Claude Code desktop app (`EnterWorktree` only moves the session's cwd; it does not render a diff). This is the one push the skill performs, and it is pre-authorized as the terminal step of a completed session:
+   ```bash
+   git push -u origin {branch_name}
+   gh pr create --draft --title "{title}" --body-file _plan/handoff/wrap.md --base {base_branch}
+   ```
+   - **Title** obeys project rules — e.g. curri PR titles must include `#autodeploy` (see the repo's AGENTS.md); read them before composing. Keep under 70 chars.
+   - The body is derived from `handoff/wrap.md` (the "diff in English") — reshape it to the PR structure in CONVENTIONS.md if one applies; never dump the raw dossier.
+   - Ticket linking: if a handle exists, reference it in the PR body/title so the PM tool links it.
+   - If the integration gate (step 1) is red, **do not open the PR** — surface the failures and stop; a draft PR is a claim the work is coherent.
+   - Report the PR URL to the user. Draft, never ready-for-review — marking it ready is the user's call.
+5. If `--draft`, finalize the ticket per the create prompt.
 
 ---
 
