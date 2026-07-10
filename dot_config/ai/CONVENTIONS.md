@@ -32,6 +32,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Match existing patterns.** Before writing code, look at similar files in the project for conventions.
 - **DRY — rule of 3.** If the same logic appears in 3 places, extract it.
 - **Prefer readability over micro-optimization.** Favor expressive collection methods (flatMap, reduce, etc.) over raw loops when the performance difference is negligible relative to I/O or other dominant costs.
+- **Don't reference uncommitted planning docs in committed code.** Comments and test titles must not point at dossier artifacts (`_plan/` ADRs/contracts, `ADR 001`, `Contract 001 §C3`, etc.) or other local-only docs — they dangle for anyone reading the code in the repo. Inline the *reasoning* the doc captured instead; reference only real, committed code symbols/files.
 
 ## Tooling
 
