@@ -37,11 +37,17 @@ If the feature name is missing or ambiguous, ask the user for it before doing an
 
 ## Configuration
 
-Read config from `$XDG_CONFIG_HOME/ai/spawn.toml` (fall back to `~/.config/ai/spawn.toml`).
+Read config from `$XDG_CONFIG_HOME/ai/mindmeld.toml` (fall back to
+`~/.config/ai/mindmeld.toml`, then legacy `spawn.toml` on machines not yet migrated —
+same schema minus `[kb]`). This is the **paradigm-wide config**: spawn-session,
+wrap-session, kb-ticket, and the kb-pulse hook all resolve paths from it.
 
 Schema:
 
 ```toml
+[kb]
+root = "~/projects/necro-kb"  # the knowledge base — vault, store, tickets/, templates/
+
 [defaults]
 branch_prefix = "as"        # short prefix at the head of every branch
 base_branch = "main"        # branch to create feature branches from
@@ -50,9 +56,8 @@ dossier_dir = "~/dossiers"   # optional; real home of dossiers (symlinked into w
 projects_dir = "~/projects"  # optional; durable main-checkout root — code-ref "open in editor" links target {projects_dir}/{repo}/…
 
 [project_management]
-provider = "linear"         # linear | notion | jira | kb | none
+provider = "linear"         # linear | notion | jira | kb | none — kb uses [kb].root
 default_project = "ENG"     # used when --draft creates a ticket (MCP providers)
-# kb_root = "~/projects/necro-kb"  # kb provider only: the knowledge base holding tickets/
 
 # Optional — omit to use skill defaults
 # [project_management.prompts]
@@ -257,7 +262,11 @@ ln -sfn "$DOSSIER" "$(git rev-parse --show-toplevel)/_plan"
 ```
 
 Everything below addresses it as `_plan/` from the worktree root — the symlink makes
-the central location transparent. Layout and templates in `references/dossier.md`:
+the central location transparent. **Template resolution:** check
+`{kb.root}/templates/dossier/` first (user-editable overrides — MANIFEST.md, plan.md,
+adr.md, contract.md); fall back to the packaged templates in `references/dossier.md`.
+Structure fields (frontmatter keys, status enums, link discipline) are contract, not
+template — overrides restyle the body, never the machine-readable fields. Layout:
 
 ```
 _plan/

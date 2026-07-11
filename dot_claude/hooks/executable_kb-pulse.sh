@@ -3,7 +3,13 @@
 # The recall flow of the continuity architecture (necro-kb
 # research/continuity-architecture.md): capture is automated, recall shouldn't
 # depend on remembering to ask. Compact by design; silent when there's nothing.
-KB="${NECRO_KB:-$HOME/projects/necro-kb}"
+# KB root resolution: env override → mindmeld.toml [kb].root → legacy default.
+KB="${NECRO_KB:-}"
+if [ -z "$KB" ] && command -v yq >/dev/null 2>&1; then
+  KB=$(yq -p toml -oy '.kb.root // ""' "${XDG_CONFIG_HOME:-$HOME/.config}/ai/mindmeld.toml" 2>/dev/null)
+  KB="${KB/#\~/$HOME}"
+fi
+KB="${KB:-$HOME/projects/necro-kb}"
 [ -d "$KB" ] || exit 0
 command -v rg >/dev/null 2>&1 || exit 0
 

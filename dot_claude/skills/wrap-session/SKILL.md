@@ -7,7 +7,7 @@ description: Close down and clean up a coding session started by the spawn-sessi
 
 Bookend to `spawn-session`. Tears down a coding session: safety checks → ticket finalization → dossier harvest → worktree removal → optional branch deletion.
 
-Shares the same config file as `spawn-session`: `$XDG_CONFIG_HOME/ai/spawn.toml` (fall back to `~/.config/ai/spawn.toml`). See `spawn-session` for the full config schema. If the config file is missing, tell the user to run `/spawn-session --init` first — don't initialize it from the wrap flow.
+Shares the paradigm-wide config with `spawn-session`: `$XDG_CONFIG_HOME/ai/mindmeld.toml` (fall back to `~/.config/ai/mindmeld.toml`, then legacy `spawn.toml`). See `spawn-session` for the full schema. If the config file is missing, tell the user to run `/spawn-session --init` first — don't initialize it from the wrap flow.
 
 ---
 

@@ -14,16 +14,23 @@ then, this skill is that seam.
 
 ## Config
 
-From `~/.config/ai/spawn.toml` (`$XDG_CONFIG_HOME` honored):
+From `~/.config/ai/mindmeld.toml` (`$XDG_CONFIG_HOME` honored; legacy fallback
+`spawn.toml` with `kb_root` under `[project_management]`):
 
 ```toml
+[kb]
+root = "~/projects/necro-kb"   # the knowledge base — tickets/ and templates/ live here
+
 [project_management]
 provider = "kb"
-kb_root  = "~/projects/necro-kb"   # the knowledge base holding tickets/
 ```
 
-"Available" = `kb_root` exists. If provider isn't `kb`, this skill still works when the
+"Available" = `[kb].root` exists. If provider isn't `kb`, this skill still works when the
 user explicitly asks for a KB ticket — provider only controls what the rituals default to.
+
+**Template resolution:** `create` seeds new tickets from `{kb.root}/templates/ticket.md`
+when it exists (user-editable), falling back to the shape in this skill + the KB schema.
+Frontmatter keys and status enums are contract — overrides restyle the body only.
 
 ## The entity
 
