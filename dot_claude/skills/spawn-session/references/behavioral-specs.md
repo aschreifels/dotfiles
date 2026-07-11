@@ -79,8 +79,9 @@ fails the CI-runnable requirement.
 
 ## Spec-agent brief template
 
-Same standing constraints as any executor brief (worktree path, no gen/lockfile/
-migrations/commits, report format), plus:
+Template resolution: `{kb.root}/templates/dossier/spec-brief.md` first (user-editable),
+this packaged copy as fallback. Same standing constraints as any executor brief
+(worktree path, no gen/lockfile/migrations/commits, report format), plus:
 
 ```markdown
 # Chunk S: behavioral specs — {feature-name}

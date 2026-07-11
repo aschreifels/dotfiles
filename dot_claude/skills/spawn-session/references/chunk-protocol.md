@@ -45,7 +45,8 @@ contract. Prefer more, smaller, disjoint chunks over fewer overlapping ones.
 ## Executor brief (`chunks/NN-brief.md`)
 
 Curated, self-contained, pointed — the executor gets *this*, never "read the plan and
-do chunk N".
+do chunk N". Template resolution: `{kb.root}/templates/dossier/chunk-brief.md` first
+(user-editable; same for `chunk-report.md` below), this packaged copy as fallback.
 
 ```markdown
 # Chunk {NN}: {title}
