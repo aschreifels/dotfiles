@@ -91,7 +91,7 @@ Placeholders: `{{provider}}`, `{{ticket}}`, `{{branch}}`.
 
 ### Phase 4 — Dossier harvest
 
-The `_plan/` dossier dies with the worktree — this phase decides what outlives it.
+The `_plan/` dossier's live home ends with the worktree (the full dossier is archived in Phase 7) — this phase decides what gets *promoted* beyond it.
 Skip silently if the worktree has no dossier (legacy `PLAN.md`-only sessions included:
 their insights move to the ticket in Phase 3 and that's enough).
 
@@ -107,7 +107,7 @@ their insights move to the ticket in Phase 3 and that's enough).
    - **`project-agent-docs`** → these should have graduated into the repo's agent docs
      *via the PR during the session*. If one didn't, flag it to the user as a follow-up
      — don't commit new files to the repo from the wrap flow.
-   - **`session-only`** → dies with the worktree, as designed.
+   - **`session-only`** → not promoted; survives only in the Phase-7 archive.
 3. Show the user the harvest manifest (what's going to the KB, one line each) before
    writing. They arbitrate; default to their call over the ADR's own hint.
 4. **Close out any KB handoff doc that spawned this session.** If the session was
@@ -206,7 +206,25 @@ git worktree remove <worktree_path>
 
 If `git worktree remove` refuses (e.g. still has uncommitted state despite Phase 2), surface the error to the user and let them decide. Don't silently add `--force` to this command — Phase 2 is the right place for that override.
 
-**Then remove the dossier's central home** (the harvest in Phase 4 already extracted anything worth keeping): `rm -rf "${dossier_dir:-$HOME/dossiers}/<repo>/<worktree-dir-name>"`. Skip if it doesn't exist (legacy sessions kept the dossier inside the worktree, where it just died with it).
+**Then ARCHIVE the dossier's central home — never delete it** (policy since
+2026-07-11; the harvest extracts what *generalizes*, the archive keeps the
+session-specific archaeology — chunk reports, review findings, answered
+questions):
+
+```bash
+ARCHIVE="${dossier_dir:-$HOME/dossiers}/_archive/<repo>"
+mkdir -p "$ARCHIVE"
+mv "${dossier_dir:-$HOME/dossiers}/<repo>/<worktree-dir-name>" "$ARCHIVE/"
+```
+
+Before the move, set the MANIFEST's `state: wrapped` (frontmatter) so vault
+Bases filtering on `state != "wrapped"` drop it from live boards. Skip if the
+dossier dir doesn't exist (legacy sessions kept it inside the worktree, where
+it died with it).
+
+Pruning is manual and user-owned: Alex deletes from `_archive/` when an entry
+has outlived its usefulness (a future cleanup ritual may automate this — until
+then, never prune from the wrap flow).
 
 ### Phase 8 — Branch deletion (optional)
 
@@ -223,6 +241,7 @@ Use `-D` (force) rather than `-d` — the branch may not be merged yet, and the 
 Summarize in a tight block:
 
 - **Worktree:** removed at `<path>`
+- **Dossier:** archived to `<dossier_dir>/_archive/<repo>/<name>`
 - **Branch:** deleted / kept (`<branch>`)
 - **Ticket:** finalized / comment posted on `<TICKET>` / skipped (reason)
 - **Harvest:** N doc(s) promoted to the KB / flagged as follow-ups / skipped (nothing to promote)
@@ -236,7 +255,7 @@ Keep it tight (5–7 lines). No celebratory emoji spam.
 
 ## Notes on intent
 
-- **The dossier dies with the worktree — except what the harvest promotes.** That's the design: the `_plan/` folder's purpose was the session; its insights move to the ticket via Phase 3 and to the KB / agent docs via Phase 4. Anything not promoted is gone on purpose. (Legacy `PLAN.md` sessions: same rule, ticket-only.)
+- **The dossier is archived, not deleted (policy since 2026-07-11).** The harvest still decides what gets *promoted* — ticket via Phase 3, KB/agent docs via Phase 4 — but the full dossier (chunk reports, review findings, answered questions) moves to `_archive/` for session archaeology. Pruning the archive is Alex's manual call, never the wrap flow's. (Legacy `PLAN.md` sessions: ticket-only, nothing to archive.)
 - **No PR creation.** That happens during the session (via GitHub MCP, `gh`, or manually) or is the user's responsibility. This skill is strictly closure.
 - **Fail safe, not fast.** Unlike the legacy cwt tool, this skill does not parallelize removal. The safety-first tradeoff matters more than saving a second on teardown.
 
