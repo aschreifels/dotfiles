@@ -50,8 +50,9 @@ dossier_dir = "~/dossiers"   # optional; real home of dossiers (symlinked into w
 projects_dir = "~/projects"  # optional; durable main-checkout root — code-ref "open in editor" links target {projects_dir}/{repo}/…
 
 [project_management]
-provider = "linear"         # linear | notion | jira | none
-default_project = "ENG"     # used when --draft creates a ticket
+provider = "linear"         # linear | notion | jira | kb | none
+default_project = "ENG"     # used when --draft creates a ticket (MCP providers)
+# kb_root = "~/projects/necro-kb"  # kb provider only: the knowledge base holding tickets/
 
 # Optional — omit to use skill defaults
 # [project_management.prompts]
@@ -136,6 +137,29 @@ Use these unless the config overrides `[project_management.prompts]`:
 
 **create:**
 > Create a draft {{provider}} issue in project {{project}} titled '{{name}}'. Use the {{provider}} MCP tools to create it. As work progresses, incrementally update the issue description with files changed, approach taken, and decisions made. At the end of the session, finalize the issue with a proper title, description, and acceptance criteria based on what was actually built.
+
+#### KB provider (`provider = "kb"`)
+
+Tickets are markdown articles in the knowledge base — no MCP, no network. File
+operations replace the prompts above; everything else about Phase 2 (best-effort,
+handle-in-branch, incremental updates, finalize commitment) holds unchanged.
+"Available" means `kb_root` (default `~/projects/necro-kb`) exists.
+
+- **Fetch** (handle like `NKB-3`): read the match for `{kb_root}/tickets/**/NKB-3_*.md`.
+  Treat it exactly like a fetched MCP ticket: title, description, acceptance criteria,
+  `- [ ]` sub-items, and follow wikilinks central to the work (one hop). No match →
+  tell the user and continue without ticket context.
+- **Create** (`--draft`): the project is the current repo's name (override:
+  `--team <project>` names a different project space). Allocate the handle — prefix =
+  initials of the repo's hyphenated segments (`necro-kb` → `NKB`; single short segment
+  uppercased: `cvc` → `CVC`), sequence = max existing for that prefix in `tickets/` + 1.
+  Write `{kb_root}/tickets/<project>/<HANDLE>_<feature-name>.md` with `type: ticket`
+  frontmatter (`status: active`, `priority: p2` default) per the KB's CLAUDE.md schema,
+  seeded from the feature name (and `--kb` article when present). The handle goes in
+  the branch name. Update the ticket incrementally as chunks land; wrap finalizes it.
+- **Landing pass**: after creating or updating a ticket, run the KB landing convention
+  (`scribe lint --changed` → `scribe sync --reindex` → `scribe commit`) so the board,
+  kb-pulse, and search stay live.
 
 ### Phase 3 — Branch checkout
 

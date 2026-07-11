@@ -64,7 +64,18 @@ Even with `--force`, call out the dirty state in the final report so the user kn
 Skip this phase entirely unless all three are true:
 - A `ticket_handle` was parsed from the branch name
 - `project_management.provider` is configured and not `none`
-- The corresponding MCP is connected and available
+- The corresponding MCP is connected and available — **or** the provider is `kb` and
+  `kb_root` exists (no MCP involved)
+
+**KB provider (`provider = "kb"`):** the ticket is
+`{kb_root}/tickets/**/<HANDLE>_*.md`. Finalize by editing the file: rewrite the
+description to what was actually built (consult the dossier + git log as below), check
+off completed `- [ ]` sub-items, add an Outcome section linking the branch/PR and any
+successor KB articles, and flip `status: done` (or note remaining scope and leave
+`in-review` if a PR is still open). Then run the KB landing pass (`scribe lint
+--changed` → `scribe sync --reindex` → `scribe commit`). The drafted-vs-fetched
+distinction below applies the same way — a drafted KB ticket gets its title/description
+rewritten; a pre-existing one gets the Outcome section appended, not overwritten.
 
 Read the `_plan/` dossier from the worktree (if still present) for context on what was planned vs. built — `handoff/wrap.md` and `MANIFEST.md` first, then the current plan version (legacy sessions may have the dossier at `.plan/` or a single `PLAN.md` instead — check those too). Also skim recent git log for the branch.
 
