@@ -19,6 +19,11 @@
       "{{ .chezmoi.homeDir }}/projects/necro-kb",
       "{{ .chezmoi.homeDir }}/.config/ai"
     ],
+    "allow": [
+      "Bash(bun run:*)",
+      "Bash(bun install)",
+      "Bash(bunx tsc:*)"
+    ],
     "deny": [
       "Bash(git push --force*)",
       "Bash(git push -f*)",
