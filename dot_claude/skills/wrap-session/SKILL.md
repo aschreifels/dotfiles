@@ -150,13 +150,15 @@ sessions have nothing to sweep).
 ### Phase 5 — Voice capture (lightweight)
 
 Harvest voice signal from this session into the corpus — the raw pool that the
-`voice-distill` skill later compresses into `~/.config/ai/VOICE.md`. This is
-**capture, not distillation**: append a few high-signal observations and stop.
-Never rewrite `VOICE.md` from here.
+`voice-distill` skill later compresses into the compiled voice reference at
+`{kb.root}/people/{kb.owner}/voice.md`. This is **capture, not distillation**:
+append a few high-signal observations and stop. Never rewrite `voice.md` from here.
 
-Append to **today's** capture log — `~/.config/ai/voice/corpus/<YYYY-MM-DD>.md`
-(create the `corpus/` dir and the day's file if missing). Multiple sessions in
-one day append to the same dated log. Capture only what genuinely helps write
+Append to **today's** capture log — `{kb.root}/people/{kb.owner}/voice/<YYYY-MM-DD>.md`
+(`kb.root`/`kb.owner` from mindmeld.toml). Create the day's file if missing, with
+`type: voice`, `status: needs-distillation`, `captured: <date>` frontmatter per the
+KB schema — the Voice.base "Needs distillation" view feeds on it. Multiple sessions
+in one day append to the same dated log. Capture only what genuinely helps write
 prose *as* Alex:
 
 - **Corrections (highest signal):** if Alex edited prose you wrote "in his
@@ -172,9 +174,11 @@ Rules:
 - **Skip silently when there's no real signal** (short or purely mechanical
   session). An empty capture beats noise.
 - **Append only.** Add one `## <ticket/feature>` section to today's log (the date
-  is the filename); do not touch `VOICE.md`, other days' logs, or prune anything
+  is the filename); do not touch `voice.md`, other days' logs, or prune anything
   — that's `voice-distill`'s job.
-- The corpus is local working state; this skill does **not** commit it.
+- The corpus lives in the KB (cross-machine — work captures reach home distills).
+  After appending, the KB landing pass runs anyway as part of this wrap's other KB
+  writes; don't run a separate one just for voice.
 
 Entry shape (inside `corpus/2026-06-22.md`):
 

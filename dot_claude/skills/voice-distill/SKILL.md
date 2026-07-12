@@ -1,28 +1,32 @@
 ---
 name: voice-distill
-description: Compress the accumulated voice corpus into the curated VOICE.md reference. Reads the raw signal pool at ~/.config/ai/voice/corpus.md (fed by wrap-session's voice-capture step) plus any writing samples the user provides, folds the new signal into ~/.config/ai/VOICE.md by DISTILLING (rewriting, not appending) under a strict size cap, shows the proposed changes for approval, then archives the folded corpus entries and syncs VOICE.md to chezmoi. Use whenever the user runs /voice-distill or says things like "distill my voice", "update VOICE.md", "compress the voice corpus", "refresh my voice doc", or hands over writing samples to fold into their voice profile. Run periodically (end of day / end of week), not every session.
+description: Compress the accumulated voice corpus into the curated voice reference. Reads the raw signal pool at {kb.root}/people/{kb.owner}/voice/ (day-logs fed by wrap-session's voice-capture step, status needs-distillation) plus any writing samples the user provides, folds the new signal into {kb.root}/people/{kb.owner}/voice.md by DISTILLING (rewriting, not appending) under a strict size cap, shows the proposed changes for approval, then flips the folded day-logs to status distilled and runs the KB landing pass. Use whenever the user runs /voice-distill or says things like "distill my voice", "update my voice doc", "compress the voice corpus", "refresh my voice doc", or hands over writing samples to fold into their voice profile. Run periodically (end of day / end of week), not every session.
 ---
 
 # voice-distill
 
 Turns the growing, messy **corpus** of voice signal into the small, curated
-**VOICE.md** that's loaded into core context every session. The corpus grows
-freely; VOICE.md must not. So distillation means **rewriting to a sharper, still-
-small doc** — never appending.
+**voice.md** that's loaded into core context every session (via the CLAUDE.md `@`
+include). The corpus grows freely; voice.md must not. So distillation means
+**rewriting to a sharper, still-small doc** — never appending.
 
-Companion to `wrap-session`'s Phase 4 (which *captures* into the corpus). This
-skill is the *compression* pass the user runs on their own cadence.
+Companion to `wrap-session`'s voice-capture phase (which *captures* into the corpus).
+This skill is the *compression* pass the user runs on their own cadence.
 
 ## Files
 
-- `~/.config/ai/VOICE.md` — the curated, always-loaded reference. **Hard cap:
-  ~150 lines.** The output of this skill.
-- `~/.config/ai/voice/corpus/` — raw pending signal, **one log per day**
-  (`<YYYY-MM-DD>.md`), fed by `wrap-session`. Input. Not loaded into context;
-  the active corpus only holds days not yet distilled.
-- `~/.config/ai/voice/archive/` — folded day-logs are **moved** here after a
-  distill (same filenames), for traceability. Prune it by hand whenever it gets
-  large.
+Paths resolve from mindmeld.toml (`[kb] root` + `owner`); identity home =
+`{kb.root}/people/{kb.owner}/`:
+
+- `people/{owner}/voice.md` — the curated, always-loaded reference
+  (`type: voice`, `status: distilled`). **Hard cap: ~150 lines of body** (frontmatter
+  excluded). The output of this skill.
+- `people/{owner}/voice/` — raw pending signal, **one log per day**
+  (`<YYYY-MM-DD>.md`, `type: voice`, `status: needs-distillation`), fed by
+  `wrap-session`. Input. `Voice.base`'s "Needs distillation" view is the queue.
+- Folded day-logs are **never deleted or moved** (KB no-deletion rule) — a distill
+  flips them to `status: distilled`, which drops them from the queue while keeping
+  the long record in place. `scribe dream` owns any eventual compaction.
 
 ## Arguments
 
@@ -38,13 +42,13 @@ skill is the *compression* pass the user runs on their own cadence.
 
 ### 1. Gather
 
-Read `VOICE.md` (current), every day-log in `voice/corpus/` (`*.md`), and any
-samples passed as args. If `voice/corpus/` has no logs **and** no samples were
-given, tell the user there's nothing to distill and stop.
+Read `voice.md` (current), every `status: needs-distillation` day-log in
+`people/{owner}/voice/`, and any samples passed as args. If the queue is empty
+**and** no samples were given, tell the user there's nothing to distill and stop.
 
 ### 2. Distill (the core move)
 
-Produce a revised `VOICE.md` that integrates the new signal. This is editorial,
+Produce a revised `voice.md` that integrates the new signal. This is editorial,
 not mechanical:
 
 - **Rewrite, don't append.** Merge each new observation into the right existing
@@ -56,9 +60,10 @@ not mechanical:
   structure — never bake in chat-looseness (typos, run-ons, interjections).
 - **Fewer, sharper rules.** Prefer concrete lexicon and do/don't with examples
   over generic adjectives. If two rules say nearly the same thing, fuse them.
-- **Enforce the cap.** If the result would exceed ~150 lines, compress harder —
+- **Enforce the cap.** If the result would exceed ~150 body lines, compress harder —
   drop the most generic / least-evidenced guidance first. Smaller-but-sharper
   always wins over comprehensive.
+- **Frontmatter is contract** — keep the `type: voice` block intact; bump `updated:`.
 
 ### 3. Review gate (do not silently overwrite)
 
@@ -69,23 +74,22 @@ approval; let them edit the proposal. (Alex reads diffs — respect that.)
 ### 4. Commit the result
 
 On approval:
-1. Write the revised `VOICE.md`.
-2. **Move** the folded day-logs from `voice/corpus/` to `voice/archive/` (keep
-   the same `<YYYY-MM-DD>.md` filenames; create `archive/` if missing) — leaving
-   the active corpus empty for the next capture cycle. Don't delete them; the
-   archive is the long record you prune by hand.
-3. Sync the curated doc: `chezmoi add ~/.config/ai/VOICE.md`. Do **not** commit
-   the corpus or archive (local working state).
+1. Write the revised `voice.md`.
+2. Flip each folded day-log's frontmatter to `status: distilled` (bump `updated:`).
+   Never delete or move them — the flip empties the queue; the record stays.
+3. Run the KB landing pass (`scribe lint --changed` → `scribe sync --reindex` →
+   `scribe commit`) — the commit is what carries the new voice to the other machines
+   (the CLAUDE.md `@` include reads it live from the KB checkout).
 
 ### 5. Report
 
-Tight summary: what moved in `VOICE.md` (sections touched, notable swaps), how
-many corpus entries folded + archived, and final line count vs. cap.
+Tight summary: what moved in `voice.md` (sections touched, notable swaps), how
+many day-logs folded + flipped, and final line count vs. cap.
 
 ## Rules
 
-- **VOICE.md only ever shrinks toward signal.** Growth in *quality*, not size.
-- **Never auto-write VOICE.md** without the review gate in step 3.
+- **voice.md only ever shrinks toward signal.** Growth in *quality*, not size.
+- **Never auto-write voice.md** without the review gate in step 3.
 - **Don't invent traits** unsupported by the corpus/samples. Under-claiming beats
   putting words in his mouth.
 - If the corpus has drifted into capturing chat-style noise, drop it during
