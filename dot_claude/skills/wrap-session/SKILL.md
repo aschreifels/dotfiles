@@ -156,8 +156,9 @@ append a few high-signal observations and stop. Never rewrite `voice.md` from he
 
 Append to **today's** capture log — `{kb.root}/people/{kb.owner}/voice/<YYYY-MM-DD>.md`
 (`kb.root`/`kb.owner` from mindmeld.toml). Create the day's file if missing, with
-`type: voice`, `status: needs-distillation`, `captured: <date>` frontmatter per the
-KB schema — the Voice.base "Needs distillation" view feeds on it. Multiple sessions
+`type: person`, `voice: corpus`, `status: needs-distillation`, `captured: <date>`
+frontmatter per the KB schema (scribe's type enum is fixed; `voice:` is the
+discriminator) — the Voice.base "Needs distillation" view feeds on it. Multiple sessions
 in one day append to the same dated log. Capture only what genuinely helps write
 prose *as* Alex:
 

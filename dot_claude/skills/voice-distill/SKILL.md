@@ -19,11 +19,12 @@ Paths resolve from mindmeld.toml (`[kb] root` + `owner`); identity home =
 `{kb.root}/people/{kb.owner}/`:
 
 - `people/{owner}/voice.md` — the curated, always-loaded reference
-  (`type: voice`, `status: distilled`). **Hard cap: ~150 lines of body** (frontmatter
+  (`type: person`, `voice: compiled`, `status: distilled` — scribe's type enum is
+  fixed; `voice:` is the discriminator). **Hard cap: ~150 lines of body** (frontmatter
   excluded). The output of this skill.
 - `people/{owner}/voice/` — raw pending signal, **one log per day**
-  (`<YYYY-MM-DD>.md`, `type: voice`, `status: needs-distillation`), fed by
-  `wrap-session`. Input. `Voice.base`'s "Needs distillation" view is the queue.
+  (`<YYYY-MM-DD>.md`, `type: person`, `voice: corpus`, `status: needs-distillation`),
+  fed by `wrap-session`. Input. `Voice.base`'s "Needs distillation" view is the queue.
 - Folded day-logs are **never deleted or moved** (KB no-deletion rule) — a distill
   flips them to `status: distilled`, which drops them from the queue while keeping
   the long record in place. `scribe dream` owns any eventual compaction.
