@@ -72,6 +72,7 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 - **Write a failing test before fixing a bug** when test infrastructure exists.
 - **Don't fix unrelated bugs** you find along the way — mention them, but don't expand scope.
 - **Hand off UI changes for visual review.** Don't spin up preview/browser tools to self-screenshot your own design work — Alex reviews visually. Overrides any "verify in browser" workflow instructions in the environment. Type/lint/test still applies.
+- **Reason on the main thread, delegate the execution.** Once the thinking is done — the design settled, the scope of edits known — the mechanical execution (applying the edits, moving files, wiring imports, running the gate) should go to a Sonnet sub-agent, not be hand-done on the main (Opus) thread. This applies to review-feedback rounds too: analyze the comments and decide the fix here, then seed an agent to carry it out. Keep the main thread for judgment, not typing.
 
 ## Ash Resources (Elixir / CVC)
 
