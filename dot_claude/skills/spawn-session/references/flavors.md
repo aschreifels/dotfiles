@@ -101,12 +101,16 @@ contract landing sites. Pin these to durable homes, never the ephemeral worktree
      never carries a `:line` suffix the shell would mis-split. Custom URI vars must
      start with `_`.
    - **One-time Obsidian setup (both steps required, or the URI is rejected):**
-     (a) Shell Commands → **Custom variables** → declare `{{_file}}` and `{{_line}}`
+     (a) Shell Commands → **Custom variables** → declare `_file` and `_line`
      (they must be pre-declared; a URI referencing an undeclared `_var` fails with
      "custom variables don't exist", which also masks the `execute` param). (b) Create
      the command mirroring `[review] editor` — default `editor = "zed {file}:{line}"`
-     → command `/usr/local/bin/zed "{{_file}}:{{_line}}"` (absolute binary path; the
-     plugin runs with a minimal PATH). Its generated id goes in `editor_open_command_id`.
+     → command `/usr/local/bin/zed "{{!_file}}:{{!_line}}"`. Two non-obvious musts:
+     the **`!` prefix** (`{{!_file}}`, not `{{_file}}`) — the plugin otherwise
+     backslash-escapes every non-`[A-Za-z0-9_]` char, so `.` and `/` in the path get
+     mangled and the editor opens an empty buffer at a nonexistent path; and the
+     **absolute binary path** (the plugin runs with a minimal PATH). The `"…"` quotes
+     stay for space-safety. Its generated id goes in `editor_open_command_id`.
    - Unset id → omit this link; the canonical relative ref (dossier.md) still stands as
      the portable pointer. **Never** point the link at the worktree — the worktree is
      ephemeral; the main checkout is the durable edit target.
