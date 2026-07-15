@@ -75,9 +75,12 @@ default_project = "ENG"     # used when --draft creates a ticket (MCP providers)
 #                       # callouts, inline code embeds, mermaid, transclusion, chat
 #                       # deep links. Guidelines per flavor: references/flavors.md
 # vault = "dossiers"    # optional; Obsidian vault name (rooted at dossier_dir) for Advanced URI deep links
-# editor_open_command_id = ""  # optional; Shell Commands plugin id for the "open path in
-#                       # editor" command — makes obsidian-flavor code refs clickable into
-#                       # the main checkout. Empty/unset = no jump links.
+# editor = "zed {file}:{line}"  # optional; the editor-open command template. Mirror it as an
+#                       # Obsidian Shell Commands command (`zed "{{_file}}:{{_line}}"`) whose
+#                       # generated id goes in editor_open_command_id below.
+# editor_open_command_id = ""  # optional; Shell Commands plugin id for the command above —
+#                       # makes obsidian-flavor code refs clickable into the main checkout.
+#                       # Empty/unset = no jump links (canonical relative ref still emitted).
 ```
 
 ### Interactive init

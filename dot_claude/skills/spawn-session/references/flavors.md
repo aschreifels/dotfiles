@@ -91,13 +91,22 @@ contract landing sites. Pin these to durable homes, never the ephemeral worktree
    written at dossier-write time, refreshed if the code changes under the ref during
    review. (Code Styler renders it too.)
 3. **Jump-to-edit in the local editor (Shell Commands)** — when
-   `[review] editor_open_command_id` is set, render an "open in editor" link whose href
-   fires the plugin against the **main checkout** (`{projects_dir}/{repo}/…`, default
-   `~/projects`) — durable, never the worktree:
-   `[open in editor](obsidian://shell-commands?vault={vault}&execute={editor_open_command_id}&_abs=/Users/…/projects/{repo}/packages/api/src/users.ts:42)`.
-   The paired command is `zed "{{_abs}}"` (Zed opens `path:line`; swap for the user's
-   editor). Custom URI variables must start with `_`. The command + its id are user-side
-   config (see the vault README); the dossier only emits the link. Unset → omit the link.
+   `[review] editor_open_command_id` is set, add an "open in editor" link that fires the
+   plugin against the **main checkout** (`{projects_dir}/{repo}/…`, default `~/projects`),
+   never the worktree:
+   `[✎ edit](obsidian://shell-commands?vault={vault}&execute={editor_open_command_id}&_file={enc-abs-path}&_line={line})`
+   - `_file` = the absolute main-checkout path, **URL-encoded** (at minimum spaces→`%20`,
+     `:`→`%3A`, `#`→`%23`); `_line` = the line number as its **own** var so the path
+     never carries a `:line` suffix the shell would mis-split. Custom URI vars must
+     start with `_`.
+   - The paired plugin command is created once, user-side, and must mirror `[review]
+     editor` from mindmeld.toml with the vars substituted — default `editor =
+     "zed {file}:{line}"` → the Obsidian command is `zed "{{_file}}:{{_line}}"` (Zed
+     opens `path:line`; swap the binary for any editor). Its generated id goes in
+     `editor_open_command_id`.
+   - Unset id → omit this link; the canonical relative ref (dossier.md) still stands as
+     the portable pointer. **Never** point the link at the worktree — the worktree is
+     ephemeral; the main checkout is the durable edit target.
 
 The default for an existing-code ref is **relative link + GitHub embed + editor link**;
 drop to the static-excerpt fallback only when there's no remote to embed from.

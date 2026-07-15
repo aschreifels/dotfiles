@@ -54,13 +54,19 @@ Editing rules:
   shared vault — relative paths are unambiguous everywhere. (Exception: executor briefs
   keep absolute worktree paths in their "Held to" section — executor correctness beats
   graph aesthetics.)
-- **Code refs are clickable links, everywhere.** Any dossier doc that mentions code
-  (open questions, ADR context, contract landing sites, chunk scopes) links it as
-  `[<repo-rel-path>:<line>](<path relative to the doc>)` — e.g. from
-  `plans/001-initial.md`: `[users.ts:42](../../packages/api/src/users.ts:42)`. The
-  visible text stays repo-relative for readability; the target resolves from the
-  doc's own location so it's click-to-jump in Zed/editors and in chat. Never a bare
-  "in the delivery resolver" — name the file and line.
+- **Code refs name the file and line, as a link — never a bare "in the delivery
+  resolver".** Any dossier doc that mentions code (open questions, ADR context, contract
+  landing sites, chunk scopes) uses the **canonical, portable form**: a relative link
+  with repo-relative visible text — from `plans/001-initial.md`,
+  `[users.ts:42](../../packages/api/src/users.ts:42)`. It reads as text, resolves on
+  GitHub, and opens in an editor wherever the dossier and code share a tree (reviewing
+  from inside the worktree, say).
+  **Caveat — the working jump depends on the review surface:** in the dossier-vault +
+  `obsidian` flavor setup, code lives *outside* the vault, so this relative link won't
+  open from Obsidian. There, the jump-to-editor is the Shell Commands "open in editor"
+  link the flavor adds *alongside* the canonical one (`references/flavors.md`,
+  Existing-code refs §3) — gated on `[review] editor_open_command_id`. The relative
+  link is always emitted; the editor link is the obsidian-flavor addition.
 - **Flavors adapt rendering to the user's review tool.** When `[review] flavor` is
   set in spawn.toml, also apply the matching section of `references/flavors.md`
   (callouts, inline code embeds, mermaid diagrams, transclusion, chat deep links for
