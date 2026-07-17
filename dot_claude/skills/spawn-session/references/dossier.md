@@ -61,12 +61,14 @@ Editing rules:
   `[users.ts:42](../../packages/api/src/users.ts:42)`. It reads as text, resolves on
   GitHub, and opens in an editor wherever the dossier and code share a tree (reviewing
   from inside the worktree, say).
-  **Caveat — the working jump depends on the review surface:** in the dossier-vault +
-  `obsidian` flavor setup, code lives *outside* the vault, so this relative link won't
-  open from Obsidian. There, the jump-to-editor is the Shell Commands "open in editor"
-  link the flavor adds *alongside* the canonical one (`references/flavors.md`,
-  Existing-code refs §3) — gated on `[review] editor_open_command_id`. The relative
-  link is always emitted; the editor link is the obsidian-flavor addition.
+  **The href depends on the review surface** (this is a flavor decision, not a second
+  link): under the dossier-vault + `obsidian` flavor with `[review]
+  editor_open_command_id` set, the ref's href **is** the Shell Commands editor-open URI,
+  so clicking the filename opens the editor (`references/flavors.md`, Existing-code
+  refs §1). The relative `../../…` target is *not* used there — code lives outside the
+  vault, so it'd resolve into the dossier tree, a dead link. The relative form is the
+  fallback href only when no editor command is configured. One link per ref, never a
+  separate pencil.
 - **Flavors adapt rendering to the user's review tool.** When `[review] flavor` is
   set in spawn.toml, also apply the matching section of `references/flavors.md`
   (callouts, inline code embeds, mermaid diagrams, transclusion, chat deep links for

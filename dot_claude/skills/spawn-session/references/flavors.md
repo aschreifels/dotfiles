@@ -71,10 +71,18 @@ doesn't exist on disk yet, so there's nothing to embed or jump to — it *is* th
 **References to existing main/production code** — open-question Refs, ADR context,
 contract landing sites. Pin these to durable homes, never the ephemeral worktree:
 
-1. **Canonical relative link, always** —
-   `[users.ts:42](../../packages/api/src/users.ts:42)`. Visible text is repo-relative;
-   the target resolves when the dossier is opened *through* the worktree symlink
-   (Zed, editors). The portable fallback that survives every renderer.
+1. **The code-ref link itself opens the editor** (when `[review] editor_open_command_id`
+   is set — the normal obsidian-flavor case). Visible text is `file.ts:line`; the
+   **href is the Shell Commands editor-open URI** (item 3 below), so clicking the
+   filename jumps straight into the editor. Do **not** emit a separate `✎` pencil and do
+   **not** point the href at a relative path — under the `~/dossiers` layout the code is
+   outside the vault, so a `../../…` target resolves into the dossier tree, not the code
+   (dead link). Example:
+   `[users.ts:42](obsidian://shell-commands/?vault=dossiers&execute={id}&_file=%2FUsers%2F…%2Fusers.ts&_line=42)`
+   - **Fallback when `editor_open_command_id` is unset:** render the portable relative
+     link `[users.ts:42](../../packages/api/src/users.ts:42)` instead — it resolves when
+     the dossier is opened *through* the worktree `_plan` symlink. Never leave a ref as
+     bare prose; one of the two forms always applies.
 2. **Live inline render via GitHub (Embed Code File)** — directly under the Refs line,
    for code that's actually on the remote. Resolve `{owner}/{repo}` from
    `git remote get-url origin`; pin the ref to the base commit the worktree was cut
@@ -90,11 +98,10 @@ contract landing sites. Pin these to durable homes, never the ephemeral worktree
    fall back to a **static excerpt**: a plain fenced block of the referenced lines,
    written at dossier-write time, refreshed if the code changes under the ref during
    review. (Code Styler renders it too.)
-3. **Jump-to-edit in the local editor (Shell Commands)** — when
-   `[review] editor_open_command_id` is set, add an "open in editor" link that fires the
-   plugin against the **main checkout** (`{projects_dir}/{repo}/…`, default `~/projects`),
+3. **The editor-open URI** (the href used by item 1) fires the Shell Commands plugin
+   against the **main checkout** (`{projects_dir}/{repo}/…`, default `~/projects`),
    never the worktree:
-   `[✎ edit](obsidian://shell-commands/?vault={vault}&execute={editor_open_command_id}&_file={enc-abs-path}&_line={line})`
+   `obsidian://shell-commands/?vault={vault}&execute={editor_open_command_id}&_file={enc-abs-path}&_line={line}`
    (note the `/?` — that's the scheme Obsidian's Shell Commands actually emits)
    - `_file` = the absolute main-checkout path, **percent-encoded as a whole URI
      component** (`encodeURIComponent` semantics — every `/`→`%2F`, space→`%20`, etc.;
@@ -114,12 +121,12 @@ contract landing sites. Pin these to durable homes, never the ephemeral worktree
      mangled and the editor opens an empty buffer at a nonexistent path; and the
      **absolute binary path** (the plugin runs with a minimal PATH). The `"…"` quotes
      stay for space-safety. Its generated id goes in `editor_open_command_id`.
-   - Unset id → omit this link; the canonical relative ref (dossier.md) still stands as
-     the portable pointer. **Never** point the link at the worktree — the worktree is
-     ephemeral; the main checkout is the durable edit target.
+   - **Never** point at the worktree — it's ephemeral; the main checkout is the durable
+     edit target.
 
-The default for an existing-code ref is **relative link + GitHub embed + editor link**;
-drop to the static-excerpt fallback only when there's no remote to embed from.
+The default for an existing-code ref is **filename→editor link + GitHub embed** (item
+1's href is item 3's URI). Drop to the relative-link href when `editor_open_command_id`
+is unset, and to the static-excerpt fallback only when there's no remote to embed from.
 
 ### Diagrams
 
