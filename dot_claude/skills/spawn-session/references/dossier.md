@@ -69,6 +69,15 @@ Editing rules:
   vault, so it'd resolve into the dossier tree, a dead link. The relative form is the
   fallback href only when no editor command is configured. One link per ref, never a
   separate pencil.
+- **Template notation for the two link kinds.** The templates below use a shorthand so
+  they stay readable — expand it when you write a real dossier doc:
+  - `{{code:<repo-rel-path>:<line>}}` → an **external code ref**. Expand to the code-ref
+    link form above: visible text `<basename>:<line>`, href = the editor URI (obsidian
+    flavor + `editor_open_command_id`) or the `../…` worktree-relative path (fallback).
+    Line optional; omit `:<line>` for a whole-file ref.
+  - **Internal dossier links** appear in the templates as **literal relative markdown**
+    (`[Plan 001](001-initial.md)`, `[ADR 002](../adr/002-slug.md)`) — copy them as-is;
+    they are what gives Obsidian backlinks and the dossier graph.
 - **Flavors adapt rendering to the user's review tool.** When `[review] flavor` is
   set in spawn.toml, also apply the matching section of `references/flavors.md`
   (callouts, inline code embeds, mermaid diagrams, transclusion, chat deep links for
@@ -109,24 +118,28 @@ updated: {YYYY-MM-DD}
 **Branch:** {branch-name}
 **Worktree:** {absolute worktree path}
 **Started:** {YYYY-MM-DD}
-**Current plan:** plans/{NNN-current}.md
+**Current plan:** [Plan {NNN-current}](plans/{NNN-current}-{slug}.md)
 
 ## Chunk map (live)
 
+<!-- Refs column = internal relative links to the dossier docs the chunk is held to. -->
+
 | # | Chunk | Files (scope) | Depends on | Parallel group | Refs | Complexity | Status |
 |---|-------|---------------|------------|----------------|------|------------|--------|
-| 0 | Contracts | ... | — | — (barrier: blocks all) | contracts/* | standard | pending |
-| 1 | ... | ... | 0 | A | adr/001, contracts/x | standard | pending |
-| R1 | {review fix} | ... | review | — | review/001 #ID | trivial | pending |
+| 0 | Contracts | ... | — | — (barrier: blocks all) | [contracts/*](contracts/) | standard | pending |
+| 1 | ... | ... | 0 | A | [adr/001](adr/001-{slug}.md), [contract](contracts/{seam}.md) | standard | pending |
+| R1 | {review fix} | ... | review | — | [review/001](review/001-findings.md) #ID | trivial | pending |
 
 Status values: `pending → briefed → executing → in-review → revising → accepted (commit <sha>)`,
 or `escalated` / `absorbed-inline`.
 
 ## Documents
 
-- Plans: {links, newest first}
-- ADRs: {one line each}
-- Contracts: {one line each}
+<!-- All internal relative links (drive Obsidian backlinks + the dossier graph). -->
+
+- Plans: [{NNN} current](plans/{NNN}-{slug}.md) · [{NNN-1}](plans/{NNN-1}-{slug}.md) (newest first)
+- ADRs: [ADR 001 — {title}](adr/001-{slug}.md) — one line each
+- Contracts: [{seam}](contracts/{seam}.md) — one line each
 
 ## Open questions
 
@@ -151,7 +164,7 @@ updated: {YYYY-MM-DD}
 
 # Plan {NNN} — {feature-name}
 
-**Supersedes:** [{NNN-1}]({NNN-1 filename}) {or "none (initial)"}
+**Supersedes:** [Plan {NNN-1}]({NNN-1}-{slug}.md) {or "none (initial)" — internal relative link}
 **What changed since last version:** {1–3 bullets; omit for 001}
 
 ## Summary of proposed changes
@@ -170,14 +183,15 @@ body later.
 ## Open questions
 
 ### Q1: {question}
-**Refs:** [{file}:{line}]({relative link}), [{file}:{line}]({relative link})
+**Refs:** {{code:packages/api/src/users.ts:42}}, {{code:apps/curri-api/src/foo.ts:88}}
 [ANSWER NEEDED]
 
-{Every question carries Refs — links to the code that motivated it, so the user can
-click through and do a cursory review before answering. A question with no code
-anchor is usually a requirements question; say so instead of omitting the line.
-When answered — in chat or in-file — inline the answer below the question. Keep the
-question. Carry unanswered questions forward into the next version.}
+{Refs are **external code** — `{{code:…}}` expands to editor-URI links (obsidian
+flavor) so the user clicks straight into the file. Every question carries them so the
+user can review before answering. A question with no code anchor is usually a
+requirements question; say so instead of omitting the line. When answered — in chat or
+in-file — inline the answer below the question. Keep the question. Carry unanswered
+questions forward into the next version.}
 ```
 
 ---
@@ -199,8 +213,10 @@ updated: {YYYY-MM-DD}
 
 ## Context
 
-Why this decision exists. What existing code/pattern it relates to — cite example
-files by path when following an established repo pattern.
+Why this decision exists. What existing code/pattern it relates to — cite the code
+with external refs, e.g. it mirrors {{code:packages/api/src/users.ts:42}}. Links to
+related dossier docs are internal relative links ([contract: {seam}](../contracts/{seam}.md),
+[ADR 002](002-{slug}.md)).
 
 ## Decision
 
@@ -239,7 +255,7 @@ updated: {YYYY-MM-DD}
 # Contract: {seam name}
 
 **Between:** {chunk/package A} ⇄ {chunk/package B}
-**Landed in chunk 0 as:** {file path(s) once committed}
+**Landed in chunk 0 as:** {{code:packages/api/src/contracts/{seam}.ts}} {external code ref, once committed}
 
 ## Types & signatures
 
