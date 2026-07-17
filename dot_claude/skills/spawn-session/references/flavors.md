@@ -96,9 +96,12 @@ contract landing sites. Pin these to durable homes, never the ephemeral worktree
    never the worktree:
    `[✎ edit](obsidian://shell-commands/?vault={vault}&execute={editor_open_command_id}&_file={enc-abs-path}&_line={line})`
    (note the `/?` — that's the scheme Obsidian's Shell Commands actually emits)
-   - `_file` = the absolute main-checkout path, **URL-encoded** (at minimum spaces→`%20`,
-     `:`→`%3A`, `#`→`%23`); `_line` = the line number as its **own** var so the path
-     never carries a `:line` suffix the shell would mis-split. Custom URI vars must
+   - `_file` = the absolute main-checkout path, **percent-encoded as a whole URI
+     component** (`encodeURIComponent` semantics — every `/`→`%2F`, space→`%20`, etc.;
+     the emitted value must contain **no literal `/`**). Raw slashes are the #1 failure
+     here — a path like `_file=/Users/…/x.ts` silently fails to open; the working form
+     is `_file=%2FUsers%2F…%2Fx.ts`. `_line` = the line number as its **own** var so the
+     path never carries a `:line` suffix the shell would mis-split. Custom URI vars must
      start with `_`.
    - **One-time Obsidian setup (both steps required, or the URI is rejected):**
      (a) Shell Commands → **Custom variables** → declare `_file` and `_line`
