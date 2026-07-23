@@ -221,11 +221,20 @@ dossier tooling (the Obsidian vault, Bases, CLI scans) sees only dossiers, never
 millions of files inside worktrees:
 
 ```bash
-DOSSIER="${dossier_dir:-$HOME/dossiers}/{repo-name}/{worktree-dir-name}"
+# Dossier name = the initiative's identity (the branch slug), NOT the random pooled
+# worktree dir name. Derive it from the canonical branch set in Phase 3 by stripping
+# the prefix — e.g. as/DEST-616_admin-dashboard-fix → DEST-616_admin-dashboard-fix.
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+DOSSIER_SLUG="${BRANCH#${branch_prefix:-as}/}"          # {TICKET}_{feature} (or {feature} when ticketless)
+DOSSIER="${dossier_dir:-$HOME/dossiers}/{repo-name}/${DOSSIER_SLUG}"
 mkdir -p "$DOSSIER"
 ln -sfn "$DOSSIER" "$(git rev-parse --show-toplevel)/_plan"
 ```
 
+Naming the dossier from the branch (not the worktree) is deliberate: the app-leased
+worktree carries a random pooled name we must not touch (Phase 3), so the dossier —
+which lives out-of-repo precisely so it *can* be named well — takes the feature/ticket
+identity instead. That's what makes the Obsidian board and `~/dossiers` legible.
 Everything below addresses it as `_plan/` from the worktree root — the symlink makes
 the central location transparent. **Template resolution:** check
 `{kb.root}/templates/dossier/` first (user-editable overrides — MANIFEST.md, plan.md,
