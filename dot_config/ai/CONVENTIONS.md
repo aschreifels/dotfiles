@@ -17,6 +17,7 @@ Personal development preferences for AI coding agents (Claude Code, Crush, etc.)
 - **Extract logic into focused helper functions.** Keep job/handler entry points thin — delegate to well-named private functions within the file.
 - **Parallelize independent I/O.** Use `Promise.all` for concurrent work that doesn't depend on each other. Keep writes sequential when ordering matters.
 - **Improve what you touch.** If you're in code with poor typing, missing types, or `any`, improve it. Don't explode scope, but be a good citizen.
+- **A trivial fix you stub your toe on, you just fix — don't file it.** If working the task directly surfaces a small (few-line) adjacent bug — a footgun you hit, not one you went looking for — fix it inline in the same change, even across a package boundary. Reserve the mention-it/spawn-a-task/chip route for fixes that are genuinely non-trivial or would meaningfully widen the diff. Filing a separate session for a 3-line fix you're already staring at is over-ceremony.
 - **Don't copy bad patterns.** If existing code does something wrong, do it right.
 - **Log levels matter.** Use `warn` for expected business events (e.g., no results found). Use `error` only for actual failures. Don't introduce new error-level logs for normal control flow.
 
