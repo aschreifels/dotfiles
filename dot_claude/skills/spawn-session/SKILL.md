@@ -161,94 +161,56 @@ exists.
   present). The returned handle goes in the branch name — that part is this skill's job.
 - As chunks land → `kb-ticket` **update**; wrap finalizes.
 
-### Phase 3 — Branch checkout
+### Phase 3 — Worktree & branch
 
-**First, confirm you're standing in the worktree — not the main checkout.** The desktop app
-opens the session inside a dedicated worktree dir (e.g. `~/worktrees/<repo>/<name>`). The main
-checkout (e.g. `~/projects/<repo>`) is a *separate* working tree, usually sitting on the base
-branch. Editing there silently puts the whole feature diff on the wrong branch. This has bitten
-us repeatedly — guard against it before doing anything else:
+**Default: use the app-leased worktree exactly as it is. Never move or rename its
+directory.** When the session opened via the worktree option, the desktop/CLI app has
+already leased a worktree (a random pooled name like `~/worktrees/<repo>/gifted-easley`)
+and is driving its live diff panel from an **in-memory snapshot taken at session
+start** — path-keyed, never re-read from disk. Verified 2026-07-23: a `git worktree
+move` (even with a `git-worktrees.json` `path` patch) permanently breaks that diff
+panel — the running session looks for the original path, finds it gone, and drops the
+worktree association. So the random directory name is **load-bearing for diff tracking
+and must not be touched**. It's also purely cosmetic to lose: plans live in `~/dossiers`
+(not the worktree), and identity rides the branch + ticket, not the folder name.
+
+Confirm you're in the worktree, then rename **only the branch** (path unchanged → the
+diff panel is unaffected):
 
 ```bash
-git rev-parse --show-toplevel   # must be the worktree path, NOT the main checkout
-git rev-parse --abbrev-ref HEAD # the branch this worktree is on
+git rev-parse --show-toplevel    # the app-leased worktree path (NOT the main checkout)
+git rev-parse --abbrev-ref HEAD  # the placeholder branch the app opened on
+git branch -m {branch_name}      # rename to canonical — safe; the tracker is path-keyed, not branch-keyed
 ```
 
-If `--show-toplevel` points at the main checkout, the user skipped the app's worktree
-checkbox — **create the worktree yourself; never edit in the main checkout**:
-
-1. Make sure Phase 2 ran first, so a drafted/fetched ticket handle can go into the name
-   (the phase order already guarantees this).
-2. Create the worktree at the standard **out-of-repo** location — worktrees never live
-   inside the repo (`.claude/worktrees/` is not acceptable):
-   ```bash
-   WT="${worktree_dir:-$HOME/worktrees}/{repo-name}/{TICKET}_{feature-name}"
-   git worktree add "$WT" -b {branch_name} {base_branch}
-   ```
-   No ticket (none passed, none drafted, or no provider configured) → the directory is
-   just `{feature-name}` and the branch is `{branch_prefix}/{feature-name}` per the
-   naming table — the prefix belongs in branch names only, never in directory names
-   (`as/` as a folder would nest). This matches the desktop app's own location
-   (`~/worktrees/<repo>/…`) and names the directory after the initiative —
-   **`git worktree list` reads as a work log**, and the branch is born canonical (no
-   rename needed in this flow).
-3. Switch the session into it with the `EnterWorktree` tool using `path: $WT` (it
-   enters any worktree registered in `git worktree list`). If the harness rejects a
-   path outside `.claude/worktrees/`, fall back to `EnterWorktree` with
-   `name: {TICKET}_{feature-name}`, tell the user the worktree landed in-repo, and
-   remove the now-unused `$WT` (`git worktree remove "$WT"` + delete the branch it
-   reserved) before continuing with the rename rule below.
-
-If the harness has no `EnterWorktree` tool, **stop** and tell the user — do not create
-the branch or edit files from the main checkout.
-
-**Never rename or move an app-created worktree directory** (checkbox flow). The desktop
-maps the session to the worktree by *path* — `git worktree move` under a live session
-breaks that mapping and the session's cwd. In that flow the *branch* is the canonical
-identity; `git worktree list` maps whimsical dir → canonical branch when you need to
-track down what happened where.
-
-Run every git command and every file edit from the worktree path for the rest of the
-session.
-
-Naming rule:
+Naming rule for `{branch_name}`:
 
 | Case | Branch name |
 |---|---|
 | With ticket (fetched or drafted) | `{branch_prefix}/{TICKET}_{feature-name}` |
 | Without ticket | `{branch_prefix}/{feature-name}` |
 
-Examples: `as/ENG-1234_my-cool-feature`, `as/my-cool-feature`.
+Examples: `as/ENG-1234_my-cool-feature`, `as/my-cool-feature`. Do this after Phase 2 so a
+drafted ticket's handle makes it into the name. Skip the rename only if the branch is
+already canonical, or it has an upstream (`git rev-parse --abbrev-ref @{u}` succeeds —
+already pushed / PR open; renaming would orphan the remote, so surface to the user
+instead). Verify after: `git rev-parse --abbrev-ref HEAD` equals `{branch_name}`.
 
-**The desktop app usually opens the worktree already on an auto-generated placeholder
-branch** (e.g. `as/some-feature-ish-name-b0af7f`). That name is never canonical —
-**rename it in place, every time, without asking**:
-
-```bash
-git branch -m {branch_name}
-```
-
-Renaming the current branch is safe in a worktree — the desktop's worktree mapping is
-by *path*, not branch name. Do this after Phase 2 so a drafted ticket's handle makes it
-into the name. Only two exceptions: the current branch already matches the canonical
-name (nothing to do), or it has an upstream (`git rev-parse --abbrev-ref @{u}`
-succeeds — already pushed / PR open; renaming would orphan the remote, so surface to
-the user instead). "Keeping the placeholder and noting it as a deviation" is not an
-option.
-
-If the worktree is sitting on the **base branch** instead, create the feature branch:
+**Fallback — session opened in the main checkout (worktree option not passed).** There
+is no app-leased worktree, so **the desktop diff panel will not track this session** —
+changes surface only at the draft PR (Phase 9). Prefer telling the user to relaunch with
+the worktree option to get live tracking. If they'd rather proceed, create a worktree
+manually out-of-repo and enter it — but say plainly that live diff-tracking is forfeit
+for this session:
 
 ```bash
-git checkout -b {branch_name} {base_branch}
+WT="${worktree_dir:-$HOME/worktrees}/{repo-name}/{TICKET}_{feature-name}"   # never .claude/worktrees/
+git worktree add "$WT" -b {branch_name} {base_branch}
 ```
 
-If the canonical branch already exists, check it out instead (`git checkout {branch_name}`) and tell the user.
-
-After checkout, **verify** the worktree is on the feature branch and not the base branch:
-
-```bash
-git rev-parse --abbrev-ref HEAD   # must equal {branch_name}, not {base_branch}
-```
+Then `EnterWorktree` with `path: $WT`. Either way: **never edit from the main checkout** —
+that silently puts the diff on the base branch. Run every git command and file edit from
+the worktree path for the rest of the session.
 
 ### Phase 4 — The dossier (the planning ritual)
 
