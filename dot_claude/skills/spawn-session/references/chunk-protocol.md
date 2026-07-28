@@ -135,6 +135,16 @@ Per chunk, on report:
    files — against the ADR Shape and contracts. The synopsis is a claim; the diff is
    the evidence. Check the scope boundary: writes outside the brief's file list are
    deviations even if the report omits them (`git status` catches these).
+2. **Conformance pass — diff the code against the *intent*, not just against itself.**
+   Internally-consistent code that quietly does something the plan didn't ask for is the
+   failure mode ordinary review misses: every reviewer reads the diff, nobody re-reads
+   the spec. So walk the plan/ADR/contract clauses this chunk was supposed to satisfy
+   and, for each, **point at the line that implements it** — or flag it. A clause you
+   can't point at is a finding, even when the diff looks clean and the tests are green.
+   (Real miss this rule exists to catch: a plan said "resolve a *real* delivery view
+   instead of the SCHEDULED facade"; the code built on the SCHEDULED facade. Coherent,
+   tested, shipped through three review rounds — and wrong, because nobody compared it
+   to the sentence that specified it.)
 2. **Accept:** run the chunk's *Needs* list (serialized-ops lane, below), re-verify,
    commit — one commit per accepted chunk. Update MANIFEST status + TodoWrite. Relay a
    one-line synopsis to the user.
@@ -149,6 +159,24 @@ Per chunk, on report:
 5. **Deviations get adjudicated, never absorbed silently:** adopt (fold into the
    ADR/contract so subsequent chunks inherit the improvement) or revert. If adopted
    mid-flight, notify executors of in-progress chunks whose briefs it affects.
+6. **An executor's open questions are findings, not FYIs.** The report's *Questions /
+   flags* section is the cheapest bug-detector in the protocol — the executor was the
+   one with their hands in the code. Each one closes exactly one of three ways:
+   **resolved with evidence** (you looked and can say why it's fine), **fixed**, or
+   **escalated to the user**. "Deferred" with a plausible-sounding rationale is not a
+   close — that's the orchestrator overruling the person who actually read the code,
+   from further away.
+   - **Anything touching contract/shape/correctness goes to the user**, not your own
+     judgment. Scope questions ("should this also cover X?") you can answer; "is this
+     the right shape?" you generally cannot, because if you knew you'd have briefed it.
+   - **Hard escalation tell:** *"I noticed X would be inconsistent, so I did Y instead."*
+     That is a design fork resolved unilaterally at the wrong altitude. The executor's
+     *observation* is usually right and their *resolution* is a coin-flip — they can
+     only see the horn of the dilemma inside their brief's file list. Escalate every
+     time, even when Y looks reasonable.
+   - Same for a question the executor answered by **narrowing** ("didn't wire it up
+     because downstream isn't ready") — not-yet-consumed is not a licence to emit a
+     knowingly wrong value.
 
 ## Serialized-ops lane
 

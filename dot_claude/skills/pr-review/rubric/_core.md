@@ -61,6 +61,47 @@ These apply across every pack and every overlay:
 
 Each pack may add its own false-positive list for its domain.
 
+Note the interaction with **Reading beyond the diff** below: "pre-existing issues on lines
+the PR didn't touch" does **not** exempt you from *reading* untouched code. A wrong call
+into an unchanged helper is a finding **on the calling line**, which the PR did touch.
+
+---
+
+## Reading beyond the diff (the structural blind spot)
+
+Reviewing `git diff` is excellent at *local* correctness — a security seam, an N+1, a
+swallowed error — and structurally blind to **"you used the wrong abstraction from a
+family you didn't touch."** The wrong call can be perfectly coherent in the changed
+lines; the evidence that it's wrong lives in a file the diff never opens. Run these three
+checks explicitly, because nothing in the diff will prompt you to.
+
+**1. Sibling-API check.** For every helper the diff *calls* (not just the ones it
+changes), open its module and enumerate its siblings. If the module exports more than one
+member of an obvious family — `buildXFromA` / `buildXFromAAndB`, `findOne` /
+`findOneWithRelations`, `applyFoo` / `applyFooStrict` — the choice needs a reason. Ask:
+*is the one being called the right member for this caller's state?* Flag a call whose
+sibling looks like a better fit when nothing in the diff justifies the pick.
+
+**2. Preconditions encoded in names.** Treat a qualifier in an identifier as a
+**precondition, not a description**: `buildScheduledX` (nothing executing yet),
+`fromDraft`, `forLegacy`, `unsafe`, `WithoutAuth`, `Lite`, `Partial`. Then verify the
+precondition actually holds on the path the diff introduces. A name whose qualifier is
+false for the new caller is a finding even when the code runs and the tests pass — often
+*especially* then.
+
+**3. Consumer-side read.** For a function returning a shared shape (facade, DTO,
+projection, event payload), don't stop at "is the object well-formed." Open two or three
+real consumers and check the fields they actually key on — ids, foreign keys,
+discriminants. A field that is merely *populated* but semantically wrong (a payload id
+where a delivery id is expected) passes every local check and breaks every downstream
+consumer.
+
+**Why this section exists:** a facade was built with the "no backing entity" constructor
+for entities that always have one, so the returned `id` was the wrong entity's id.
+Internally consistent, fully tested, and it survived three review rounds — all of which
+read the diff. A human who knew what the two constructors *meant* caught it in one pass.
+These checks are the mechanical substitute for that knowledge.
+
 ---
 
 ## Voice for posted comments
