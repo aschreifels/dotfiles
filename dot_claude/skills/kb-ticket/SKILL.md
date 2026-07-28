@@ -57,7 +57,10 @@ criteria, `- [ ]` sub-items (Tasks plugin granularity). Wikilink the related KB 
 allocate handle → write the file (frontmatter per schema, body seeded with problem +
 acceptance-criteria skeleton) → landing pass → report the handle.
 
-**fetch** `<HANDLE>`: read the match for `{kb_root}/tickets/**/<HANDLE>_*.md`; follow
+**fetch** `<HANDLE>`: locate the file depth-agnostically —
+`find {kb_root}/tickets -name '<HANDLE>_*.md'` (not a `**` glob: that silently
+degrades to a single `*` in default bash, so it only ever matched tickets exactly
+one directory deep — archived/`done/` subfolders broke it). Read the match; follow
 wikilinks central to the work (one hop). No match → say so, don't guess.
 
 **update** `<HANDLE>`: append progress to the body (files changed, decisions, chunk
