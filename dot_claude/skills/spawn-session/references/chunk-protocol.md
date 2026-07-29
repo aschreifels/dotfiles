@@ -81,6 +81,12 @@ Run and pass before reporting:
 
 ## Standing constraints
 
+- **The brief's claims about existing code are assertions to verify, not context to
+  trust.** Before building on one, open the file and confirm it. This applies hardest to
+  claims that *justify a decision* — "X is forced because Y", "nothing like this exists
+  yet", "only these three call sites". A false premise invalidates the decision built on
+  it, so a premise that doesn't hold is an **escalation**, not something to work around.
+  Say which claim is false, what the code actually does (file:line), and stop.
 - No codegen, no lockfile ops (`rush add`/`update`), no migrations, no `git commit`,
   no pushes. If you need any of these, list it under **Needs** in your report and stop
   at the point of need.
@@ -145,6 +151,19 @@ Per chunk, on report:
    instead of the SCHEDULED facade"; the code built on the SCHEDULED facade. Coherent,
    tested, shipped through three review rounds — and wrong, because nobody compared it
    to the sentence that specified it.)
+3. **Premise pass — check the spec against the code, not only the code against the
+   spec.** The conformance pass above catches "we didn't build what was specified." It
+   cannot catch "what was specified rested on a false claim about the existing code,"
+   because a rationale has no line to point at. So for every load-bearing factual claim
+   in the brief/ADR — anything of the form *"X is forced because Y"*, *"no such thing
+   exists yet"*, *"only these N call sites"* — open the code and confirm it still holds.
+   Claims written by the orchestrator get **more** scrutiny than the executor's, not
+   less: they were never checked by anyone, and everything downstream inherits them.
+   (Real misses this rule exists to catch: a brief declared a plumbing decision "forced"
+   because three producers supposedly didn't emit directly — all three did, inline; and
+   the same brief specified building a port that had already shipped a week earlier
+   under another ticket. Both survived orchestrator review and were caught only because
+   the executor read the files the brief described.)
 2. **Accept:** run the chunk's *Needs* list (serialized-ops lane, below), re-verify,
    commit — one commit per accepted chunk. Update MANIFEST status + TodoWrite. Relay a
    one-line synopsis to the user.
