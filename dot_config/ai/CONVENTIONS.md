@@ -78,6 +78,13 @@ Keep titles under 70 characters. Don't pad sections — a missing section is bet
 - **Review the code against the intent, not just against itself.** When a plan/ADR/spec exists, walk its clauses and point at the line implementing each one — a clause you can't point at is a finding. Internally-consistent code that quietly does something the spec didn't ask for is the failure ordinary review misses, because every reviewer reads the diff and nobody re-reads the spec.
 - **Also check the spec against the code — a plan's factual claims are assertions, not context.** The rule above catches "we didn't build what was specified"; it cannot catch "what was specified rested on a false claim about existing code," because a rationale has no line to point at. Any claim of the form *"X is forced because Y"*, *"nothing like this exists yet"*, or *"only these N call sites"* gets opened and confirmed before anything is built on it. My own claims get more scrutiny than a sub-agent's, not less — nobody checked them, and everything downstream inherits them. A false premise invalidates the decision built on it, so it escalates rather than getting worked around.
 
+## Database Queries (read replica / ad hoc)
+
+- **EXPLAIN before you run anything against the RO replica.** Plain `EXPLAIN` first (plan only, free) and confirm every large table is reached through an index — no `Seq Scan` on `payloads`/`deliveries`/`exceptions`-sized tables, no correlated LATERAL over a CTE. Then `EXPLAIN ANALYZE` under a tight `statement_timeout` (30s) to confirm the actual row counts, and only then run the real query. The replica serves prod read traffic (workers, fulfillment-service), so a runaway scan is not a private cost.
+- **Always set `statement_timeout` (≤30s) and `default_transaction_read_only = on`** on ad hoc replica sessions. A bad plan should die fast, not run for a minute.
+- **Aggregate before you join.** Reduce the big side to one row per key (GROUP BY) and hash-join it; don't probe a CTE per row.
+- **Check the schema's `@@index` list before choosing a filter column.** Pick the indexed door in (e.g. `payloads.batch_id`, not `payloads.originating_user_id`/`created_at`, which have no index).
+
 ## Ash Resources (Elixir / CVC)
 
 - **Fragment by stanza length, not stanza type.** Use `Spark.Dsl.Fragment` when a stanza (attributes, actions, policies, etc.) grows long enough that it would be uncomfortable as a single function — that's the signal to move it to its own module. If the whole resource including every stanza is succinct, keep it as one file. There is no hard rule that attributes or actions must always be extracted.
