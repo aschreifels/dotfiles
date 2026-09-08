@@ -43,10 +43,12 @@ How to write human-facing prose (PRs, docs, tickets, updates) as me — my verna
 
 @{{ .chezmoi.homeDir }}/projects/necro-kb/people/alexander-schreifels/voice.md
 
-<!-- scribe:begin — managed by `scribe init`, do not edit by hand -->
 ## necro-kb Knowledge Base
 
-aschreifels maintains a personal knowledge base at `{{ .chezmoi.homeDir }}/projects/necro-kb` indexed by qmd. It contains wiki articles, project insights, decisions, patterns, and solutions extracted from projects. The KB is LLM-managed — a `scribe` Go binary runs on cron to auto-extract from git repos, mine Claude Code sessions via ccrider, capture self-sent iMessage URLs, and absorb queued URLs. You don't need to run any of that yourself; it's already scheduled.
+aschreifels maintains a personal knowledge base at `{{ .chezmoi.homeDir }}/projects/necro-kb` indexed by qmd. It contains wiki articles, project insights, decisions, patterns, and solutions extracted from projects. The KB is LLM-managed, and `mindmeld` is the engine that maintains it — session rituals, ticketing, session mining, lint, and the qmd index all run through that one binary.
+
+**Nothing runs on cron — you run it, as the last step of the work.** `mindmeld sync` (pull, reconcile, push against the KB's remote) lands KB changes; `mindmeld reindex` lands them on the qmd side, because a file on disk that isn't reindexed won't surface in `qmd query`. `mindmeld mine` pulls knowledge out of past sessions, also on demand. Two things follow from that: KB work isn't done until those have run, and `mindmeld sync` **refuses a dirty tree** rather than committing for you — commit your own work first and leave anything that isn't yours alone. That refusal is a feature; it's the difference between a tool that lands your changes and one that silently adopts someone else's.
+
 
 **When to search it:** Before making architectural decisions, when encountering a pattern that might exist elsewhere, when the user asks "have I done this before" or "what do I know about X", or when you need context about aschreifels's other projects.
 
@@ -65,23 +67,9 @@ aschreifels maintains a personal knowledge base at `{{ .chezmoi.homeDir }}/proje
 **How to phrase the query.** Natural language beats keywords — the search already expands via vec + hyde. Lead with the concrete noun ("token rate limiter", "azure extraction") rather than the category ("performance", "reliability").
 
 **Follow the graph — one hop.** qmd returns flat ranked hits; it doesn't traverse wikilinks. After you read a top result, if it contains a `[[Wikilink]]` or a `related:` frontmatter entry that names a concept **central to the user's question** (not just incidental), fetch that neighbor with `mcp__plugin_qmd_qmd__get` before answering. Stop at one hop unless the second hop is clearly needed. This matches the progressive-disclosure-retrieval pattern (L2 = seed articles + 1–2 hops). Central-to-the-question is the bar — don't expand on every wikilink you see, or you'll drift off-topic and bloat context.
+**What "found nothing useful" means.** If a proactive search returns no relevant hits, report the gap: "The KB doesn't cover this yet — if the answer turns out to be reusable, it's a good candidate for a KB entry."
 
-**What "found nothing useful" means.** If a proactive search returns no relevant hits, report the gap: "The KB doesn't cover this yet — if the answer turns out to be reusable, it's a good candidate for a drop file."
-
-**How to contribute from other projects — drop files.** When a session in a non-KB project produces reusable knowledge, write a drop file to `.claude/necro-kb/YYYY-MM-DD-{slug}.md` in the current project root with this frontmatter:
-
-```yaml
----
-necro-kb: true
-action: create | update | append
-title: "Article Title"
-type: project | tool | person | decision | pattern | solution | research
-domain: contract | general | oss | personal | work
-tags: [tag1, tag2]
----
-```
-
-`scribe sync` running on cron in the KB will absorb these automatically. For rolling insights that belong to a specific project's memory, add `rolling_target: learnings` or `rolling_target: decisions-log` to the frontmatter. Tell aschreifels what you filed and why — don't fabricate drop files for trivial facts.
+**How to contribute from other projects.** Write directly to `{{ .chezmoi.homeDir }}/projects/necro-kb` — the right directory for the article's type (`wiki/`, `decisions/`, `patterns/`, `solutions/`, `tools/`, or the project's own `projects/<name>/learnings.md`) — in the same session that produced the knowledge. Don't create `.claude/necro-kb/` drop-file directories inside project repos; committed or untracked, they're noise, and nothing sweeps them up any more. Then run `mindmeld sync` and `mindmeld reindex` to land it. Tell aschreifels what you filed and why — don't fabricate entries for trivial facts.
 
 ## Storage boundaries
 
@@ -90,8 +78,7 @@ tags: [tag1, tag2]
 3. **Session ephemera** (conversation context only) — task lists, scratch plans, intermediate findings with no value beyond the current session.
 
 **Decision rubric when unsure:**
-- Will this matter in a different project? → bucket 1 (drop file)
+- Will this matter in a different project? → bucket 1 (write it into the KB)
 - Will this matter in *this* project next month? → bucket 2 (`.claude/research/`)
 - Will this matter in 10 minutes? → bucket 3 (keep in context)
 - Will this never matter again? → don't write it
-<!-- scribe:end -->
