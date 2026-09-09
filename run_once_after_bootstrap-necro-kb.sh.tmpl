@@ -1,8 +1,9 @@
 {{ if eq .chezmoi.os "darwin" -}}
 #!/bin/bash
 # Bootstrap the necro-kb knowledge-base stack on a new machine:
-#   1. clone the KB          2. register + embed the qmd index          3. load scribe's cron
-# Runs after package install (scribe/qmd/git come from the brew manifest).
+#   1. clone the KB          2. register + embed the qmd index          3. install mindmeld's rituals
+# Runs after package install (qmd/git come from the brew manifest; mindmeld
+# comes from its own tap).
 # Idempotent and best-effort — guards skip anything already in place, and a
 # failed step never aborts `chezmoi apply` (re-run apply once prerequisites exist).
 set -uo pipefail
@@ -13,7 +14,7 @@ KB="$HOME/projects/necro-kb"
 if [ ! -d "$KB/.git" ]; then
     mkdir -p "$HOME/projects"
     if ! git clone git@github.com:aschreifels/necro-kb.git "$KB"; then
-        echo "necro-kb bootstrap: clone failed (SSH key set up? repo access?) — skipping index + cron; re-run 'chezmoi apply' once fixed." >&2
+        echo "necro-kb bootstrap: clone failed (SSH key set up? repo access?) — skipping index + ritual install; re-run 'chezmoi apply' once fixed." >&2
         exit 0
     fi
 fi
@@ -24,8 +25,12 @@ if command -v qmd >/dev/null 2>&1 && ! qmd collection list 2>/dev/null | grep -q
     qmd collection add "$KB" && qmd embed
 fi
 
-# 3. Load scribe's LaunchAgents so maintenance (sync, reindex, dream, capture) runs on cron.
-if command -v scribe >/dev/null 2>&1; then
-    scribe cron install || true
+# 3. Install the mindmeld rituals (skills, the SessionStart hook, settings wiring).
+#    There is no cron to load: mindmeld's maintenance verbs (sync, reindex, mine)
+#    are run explicitly, so this only has to put the rituals in place. `init` is
+#    additive-idempotent — existing files are left alone, collisions are backed
+#    up — so re-running it is the documented repair, not a risk.
+if command -v mindmeld >/dev/null 2>&1; then
+    mindmeld init --defaults --kb "$KB" || true
 fi
 {{ end -}}
