@@ -1,26 +1,6 @@
 {
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.sh"
-  },
   "includeCoAuthoredBy": false,
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          { "type": "command", "command": "{{ .chezmoi.homeDir }}/.claude/hooks/kb-pulse.sh" }
-        ]
-      }
-    ]
-  },
   "permissions": {
-    "defaultMode": "acceptEdits",
-    "additionalDirectories": [
-      "{{ .chezmoi.homeDir }}/projects/necro-kb",
-      "{{ .chezmoi.homeDir }}/.config/ai",
-      "{{ .chezmoi.homeDir }}/dossiers",
-      "{{ .chezmoi.homeDir }}/dossiers-archive"
-    ],
     "allow": [
       "Bash(bun run:*)",
       "Bash(bun install)",
@@ -33,6 +13,43 @@
       "Bash(git rebase*)",
       "Bash(git pull --rebase*)",
       "Bash(git reset --hard*)"
+    ],
+    "defaultMode": "auto",
+    "additionalDirectories": [
+      "{{ .chezmoi.homeDir }}/.config/ai",
+      "{{ .chezmoi.homeDir }}/dossiers",
+      "{{ .chezmoi.homeDir }}/dossiers-archive",
+      "{{ .chezmoi.homeDir }}/projects/necro-kb"
     ]
-  }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{ .chezmoi.homeDir }}/.claude/hooks/kb-pulse.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  },
+  "skipWorkflowUsageWarning": true,
+  "agentPushNotifEnabled": true,
+  "tui": "fullscreen"
 }
